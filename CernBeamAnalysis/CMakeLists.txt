@@ -1,9 +1,9 @@
 ################################################################################
 ## Data analysis project based on J-PET Framework
-## Created by J-PET Framework developers 2016-2020
+## Created by J-PET Framework developers 2016-2024
 ##
 ## Description:
-##   Data reconstruction in Modular J-PET Detector
+##   Data reconstruction of CERN data
 ################################################################################
 
 cmake_minimum_required(VERSION 3.1...3.14)
@@ -17,17 +17,13 @@ endif()
 ######################################################################
 ## Project name
 ######################################################################
-set(projectName ModularDetectorAnalysis)
+set(projectName CernBeamAnalysis)
 
 ## Auxiliary files are copied to build directory after CMake
 ## You can add any files to this list
 set(AUXILLIARY_FILES
   README.md
   userParamsModular.json
-  calibration_scripts/README.md
-  calibration_scripts/matrix_offests.C
-  calibration_scripts/tof_synchro.C
-  calibration_scripts/hit_tdiff_effvel.C
 )
 
 ################################################################################
@@ -39,6 +35,40 @@ project(${projectName} CXX) # using only C++
 file(GLOB HEADERS *.h)
 file(GLOB SOURCES *.cpp)
 
+######################################################################
+## Using source files of modules from ModularDetectorAnalysis
+set(use_modules_from ../ModularDetectorAnalysis)
+## Add your own HEADERS/SOURCES
+set(HEADERS
+  ${use_modules_from}/TimeWindowCreator.h
+  ${use_modules_from}/TimeWindowCreatorTools.h
+  ${use_modules_from}/SignalFinder.h
+  ${use_modules_from}/SignalFinderTools.h
+  ${use_modules_from}/SignalTransformer.h
+  ${use_modules_from}/SignalTransformerTools.h
+  ${use_modules_from}/HitFinderTools.h
+  ${use_modules_from}/EventFinder.h
+  ${use_modules_from}/EventCategorizer.h
+  ${use_modules_from}/EventCategorizerTools.h
+  ${use_modules_from}/CalibrationTools.h
+  CERNHitFinder.h
+)
+
+set(SOURCES
+  main.cpp
+  ${use_modules_from}/TimeWindowCreator.cpp
+  ${use_modules_from}/TimeWindowCreatorTools.cpp
+  ${use_modules_from}/SignalFinder.cpp
+  ${use_modules_from}/SignalFinderTools.cpp
+  ${use_modules_from}/SignalTransformer.cpp
+  ${use_modules_from}/SignalTransformerTools.cpp
+  ${use_modules_from}/HitFinderTools.cpp
+  ${use_modules_from}/EventFinder.cpp
+  ${use_modules_from}/EventCategorizer.cpp
+  ${use_modules_from}/EventCategorizerTools.cpp
+  ${use_modules_from}/CalibrationTools.cpp
+  CERNHitFinder.cpp
+)
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})
 target_link_libraries(${projectBinary} JPetFramework::JPetFramework)
 

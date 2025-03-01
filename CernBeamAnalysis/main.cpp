@@ -13,16 +13,14 @@
  *  @file main.cpp
  */
 
-#include "Downscaler.h"
-#include "EventCategorizer.h"
-#include "EventFinder.h"
-#include "HitFinder.h"
-#include "SignalFinder.h"
-#include "SignalTransformer.h"
-#include "TimeWindowCreator.h"
+#include "../ModularDetectorAnalysis/EventCategorizer.h"
+#include "../ModularDetectorAnalysis/EventFinder.h"
+#include "../ModularDetectorAnalysis/SignalFinder.h"
+#include "../ModularDetectorAnalysis/SignalTransformer.h"
+#include "../ModularDetectorAnalysis/TimeWindowCreator.h"
+#include "CERNHitFinder.h"
 
 #include <JPetManager/JPetManager.h>
-
 using namespace std;
 
 int main(int argc, const char* argv[])
@@ -34,18 +32,16 @@ int main(int argc, const char* argv[])
     manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
     manager.registerTask<SignalFinder>("SignalFinder");
     manager.registerTask<SignalTransformer>("SignalTransformer");
-    manager.registerTask<HitFinder>("HitFinder");
+    manager.registerTask<CERNHitFinder>("CERNHitFinder");
     manager.registerTask<EventFinder>("EventFinder");
-    manager.registerTask<Downscaler>("Downscaler");
     manager.registerTask<EventCategorizer>("EventCategorizer");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot");
     manager.useTask("SignalFinder", "tslot", "pm.sig");
     manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
-    manager.useTask("HitFinder", "mtx.sig", "hits");
+    manager.useTask("CERNHitFinder", "mtx.sig", "hits");
     manager.useTask("EventFinder", "hits", "unk.evt");
-    manager.useTask("Downscaler", "unk.evt", "pre.evt");
-    manager.useTask("EventCategorizer", "pre.evt", "cat.evt");
+    manager.useTask("EventCategorizer", "unk.evt", "cat.evt");
 
     manager.run(argc, argv);
   }

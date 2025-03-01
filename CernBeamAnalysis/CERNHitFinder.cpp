@@ -10,11 +10,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *  @file HitFinder.cpp
+ *  @file CERNHitFinder.cpp
  */
 
-#include "HitFinder.h"
-#include "HitFinderTools.h"
+#include "CERNHitFinder.h"
+#include "../ModularDetectorAnalysis/HitFinderTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetWriter/JPetWriter.h>
 #include <boost/property_tree/json_parser.hpp>
@@ -24,11 +24,11 @@
 
 using namespace jpet_options_tools;
 
-HitFinder::HitFinder(const char* name) : JPetUserTask(name) {}
+CERNHitFinder::CERNHitFinder(const char* name) : JPetUserTask(name) {}
 
-HitFinder::~HitFinder() {}
+CERNHitFinder::~CERNHitFinder() {}
 
-bool HitFinder::init()
+bool CERNHitFinder::init()
 {
   INFO("Hit finding Started");
   fOutputEvents = new JPetTimeWindow("JPetPhysRecoHit");
@@ -48,6 +48,12 @@ bool HitFinder::init()
   if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
   {
     boost::property_tree::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
+  }
+
+  if (isOptionSet(fParams.getOptions(), kOutputStatsFileParamKey))
+  {
+    fOutputStatsFile = getOptionAsString(fParams.getOptions(), kOutputStatsFileParamKey);
+    boost::property_tree::read_json(fOutputStatsFile, fOutputStatsJSON);
   }
 
   if (isOptionSet(fParams.getOptions(), kMinHitMultiDiffParamKey))
@@ -81,7 +87,7 @@ bool HitFinder::init()
   return true;
 }
 
-bool HitFinder::exec()
+bool CERNHitFinder::exec()
 {
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
@@ -99,13 +105,14 @@ bool HitFinder::exec()
   return true;
 }
 
-bool HitFinder::terminate()
+bool CERNHitFinder::terminate()
 {
+  boost::property_tree::write_json(fOutputStatsFile, fOutputStatsJSON);
   INFO("Hit finding ended");
   return true;
 }
 
-void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
+void CERNHitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
 {
   auto sortedHits = hits;
   HitFinderTools::sortByTime(sortedHits);
@@ -113,6 +120,8 @@ void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
   if (fSaveControlHistos)
   {
     getStatistics().fillHistogram("hits_tslot", hits.size());
+    fOutputStatsJSON.put(getInputFile(fParams.getOptions()) + "." + std::to_string(fTimeWindowIterator), hits.size());
+    fTimeWindowIterator++;
   }
 
   for (auto& hit : sortedHits)
@@ -138,16 +147,15 @@ void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
       if (hit.getToT() != 0.0)
       {
         getStatistics().fillHistogram("hit_tot_scin", scinID, hit.getToT());
-        getStatistics().fillHistogram("hit_tot_scin_z_pos", scinID, hit.getToT(), hit.getPosZ());
       }
     }
   }
 }
 
-void HitFinder::initialiseHistograms()
+void CERNHitFinder::initialiseHistograms()
 {
-  auto minScinID = getParamBank().getScins().begin()->first;
-  auto maxScinID = getParamBank().getScins().rbegin()->first;
+  auto minScinID = 201;
+  auto maxScinID = 213;
 
   getStatistics().createHistogramWithAxes(new TH1D("hits_tslot", "Number of Hits in Time Window", 400, 0.5, 400.5), "Hits in Time Slot",
                                           "Number of Time Slots");
@@ -178,11 +186,6 @@ void HitFinder::initialiseHistograms()
   getStatistics().createHistogramWithAxes(new TH2D("hit_tot_scin", "Hit ToT divided by multiplicity, all hits", maxScinID - minScinID + 1,
                                                    minScinID - 0.5, maxScinID + 0.5, 200, 0.0, 1.2 * fToTHistoUpperLimit),
                                           "Scintillator ID", "Time over Threshold [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH3D("hit_tot_scin_z_pos", "Hit ToT divided by multiplicity per scin vs z-axis",
-                                                   maxScinID - minScinID + 1, minScinID - 0.5, maxScinID + 0.5, 200, 0.0, 1.2 * fToTHistoUpperLimit,
-                                                   121, -30.5, 30.5),
-                                          "Z [cm]", "X [cm]", "Y [cm]");
 
   // Unused sigals stats
   getStatistics().createHistogramWithAxes(
