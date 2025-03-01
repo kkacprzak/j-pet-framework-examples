@@ -96,6 +96,8 @@ protected:
   double fScatterTimeMax = 0.0;
   double fScatterAngleMin = 160.0;
   double fScatterAngleMax = 180.0;
+  double fScatterRadiusMin = 160.0;
+  double fScatterRadiusMax = 180.0;
   double fMaxTimeDiff = 15000.0;
   double f2gThetaDiff = 3.0;
   double f2gTimeDiff = 2000.0;

@@ -47,9 +47,7 @@ bool TimeWindowCreator::init()
   }
   else
   {
-    WARNING(Form("No value of the %s parameter provided by the user. Using "
-                 "default value of %lf.",
-                 kMinTimeParamKey.c_str(), fMinTime));
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMinTimeParamKey.c_str(), fMinTime));
   }
   if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey))
   {
@@ -57,14 +55,10 @@ bool TimeWindowCreator::init()
   }
   else
   {
-    WARNING(Form("No value of the %s parameter provided by the user. Using "
-                 "default value of %lf.",
-                 kMaxTimeParamKey.c_str(), fMaxTime));
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMaxTimeParamKey.c_str(), fMaxTime));
   }
 
-  fTimeWindowWidth = fMaxTime - fMinTime;
-
-  // Reading file with offsets to property tree - SiPM calibration per matrix
+  // Getting the calibration file from user options
   if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
   {
     pt::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
@@ -133,7 +127,7 @@ bool TimeWindowCreator::exec()
 
         double time = hit.time / 1000.;
 
-        time = time - fTimeWindowWidth;
+        time = time - (fMaxTime - fMinTime);
         time *= -1.;
 
         if (time < fMinTime || time > fMaxTime)

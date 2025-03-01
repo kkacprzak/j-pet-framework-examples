@@ -14,14 +14,21 @@
  */
 
 #include "TimeWindowCreator.h"
-#include "EventIII.h"
-#include "JPetOptionsTools/JPetOptionsTools.h"
-#include "JPetWriter/JPetWriter.h"
 #include "TimeWindowCreatorTools.h"
-#include "UniversalFileLoader.h"
+#include <JPetOptionsTools/JPetOptionsTools.h>
+#include <JPetTaskIO/JPetInputHandlerHLD.h>
+#include <JPetWriter/JPetWriter.h>
+#include <Signals/JPetChannelSignal/JPetChannelSignal.h>
+
+#include <boost/property_tree/json_parser.hpp>
+
+#include <iostream>
+#include <unpacker_types.hpp>
+#include <utility>
 
 using namespace jpet_options_tools;
 using namespace std;
+namespace pt = boost::property_tree;
 
 TimeWindowCreator::TimeWindowCreator(const char* name) : JPetUserTask(name) {}
 
@@ -30,13 +37,13 @@ TimeWindowCreator::~TimeWindowCreator() {}
 bool TimeWindowCreator::init()
 {
   INFO("TimeSlot Creation Started");
-  fOutputEvents = new JPetTimeWindow("JPetSigCh");
+  fOutputEvents = new JPetTimeWindow("JPetChannelSignal");
 
   // Reading values from the user options if available
   // Min allowed signal time
   if (isOptionSet(fParams.getOptions(), kMinTimeParamKey))
   {
-    fMinTime = getOptionAsFloat(fParams.getOptions(), kMinTimeParamKey);
+    fMinTime = getOptionAsDouble(fParams.getOptions(), kMinTimeParamKey);
   }
   else
   {
@@ -45,32 +52,29 @@ bool TimeWindowCreator::init()
   // Max allowed signal time
   if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey))
   {
-    fMaxTime = getOptionAsFloat(fParams.getOptions(), kMaxTimeParamKey);
+    fMaxTime = getOptionAsDouble(fParams.getOptions(), kMaxTimeParamKey);
   }
   else
   {
     WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMaxTimeParamKey.c_str(), fMaxTime));
   }
-  // Getting time calibration file from user options
-  auto calibFile = std::string("dummyCalibration.txt");
-  if (isOptionSet(fParams.getOptions(), kTimeCalibFileParamKey))
+
+  // Getting the calibration file from user options
+  if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
   {
-    calibFile = getOptionAsString(fParams.getOptions(), kTimeCalibFileParamKey);
+    pt::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
   }
-  else
-  {
-    WARNING("No path to the time calibration file was provided in user options.");
-  }
+
   // Getting bool for saving histograms
   if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
   {
     fSaveControlHistos = getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
   }
-  // Use of Time Calibratin and Thresholds files
-  fTimeCalibration = UniversalFileLoader::loadConfigurationParameters(calibFile, getParamBank());
-  if (fTimeCalibration.empty())
+
+  // build a lookup table of channel offsets
+  for (auto& dm : getParamBank().getDataModules())
   {
-    ERROR("Time Calibration seems to be empty");
+    fChannelOffsets[dm.second->getTBRNetAddress()] = dm.second->getChannelsOffset();
   }
 
   // Control histograms

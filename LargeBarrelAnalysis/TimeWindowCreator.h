@@ -16,9 +16,11 @@
 #ifndef TIMEWINDOWCREATOR_H
 #define TIMEWINDOWCREATOR_H
 
+#include <JPetChannel/JPetChannel.h>
 #include <JPetTimeWindow/JPetTimeWindow.h>
 #include <JPetUserTask/JPetUserTask.h>
-#include <JPetChannel/JPetChannel.h>
+#include <Signals/JPetChannelSignal/JPetChannelSignal.h>
+
 #include <map>
 #include <set>
 
@@ -33,29 +35,29 @@ class JPetWriter;
  * performed, if ASCII files of standard format were provided. In case of errors,
  * creation of Time Windows continues without this additional information.
  */
-class TimeWindowCreator: public JPetUserTask
+class TimeWindowCreator : public JPetUserTask
 {
 public:
   explicit TimeWindowCreator(const char* name);
-	virtual ~TimeWindowCreator();
-	virtual bool init() override;
-	virtual bool exec() override;
-	virtual bool terminate() override;
+  virtual ~TimeWindowCreator();
+  virtual bool init() override;
+  virtual bool exec() override;
+  virtual bool terminate() override;
 
 protected:
-	void saveSigChs(const std::vector<JPetSigCh>& sigChVec);
-	void initialiseHistograms();
-	const std::string kTimeCalibFileParamKey = "TimeCalibLoader_ConfigFile_std::string";
-	const std::string kThresholdFileParamKey = "ThresholdLoader_ConfigFile_std::string";
-	const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
-	const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_float";
-	const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_float";
-	const std::string kMainStripKey = "TimeWindowCreator_MainStrip_int";
-	const int kNumOfThresholds = 4;
-	std::map<unsigned int, std::vector<double>> fTimeCalibration;
-	bool fSaveControlHistos = true;
-	double fMinTime = -1.e6;
-	double fMaxTime = 0.;
+  void saveChannelSignals(const std::vector<JPetChannelSignal>& channelSignalVec);
+  void initialiseHistograms();
+  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
+  const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
+  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
+  const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_double";
+  const std::string kMainStripKey = "TimeWindowCreator_MainStrip_int";
+  const int kNumOfThresholds = 4;
+  bool fSaveControlHistos = true;
+  double fMinTime = -1.e6;
+  double fMaxTime = 0.;
+
+  std::map<std::uint32_t, int> fChannelOffsets;
 };
 
 #endif /* !TIMEWINDOWCREATOR_H */

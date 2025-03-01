@@ -47,12 +47,12 @@ void CalibrationTools::selectForTOF(const JPetEvent& event, JPetStatistics& stat
         continue;
       }
 
-      // Skip if scatter
-      if (EventCategorizerTools::checkForScatter(hit1, hit2, stats, false, testType, scatterTestValue, scatterTimeMin, scatterTimeMax,
-                                                 scatterAngleMin, scatterAngleMax))
-      {
-        continue;
-      }
+      // // Skip if scatter
+      // if (EventCategorizerTools::checkForScatter(hit1, hit2, stats, false, testType, scatterTestValue, scatterTimeMin, scatterTimeMax,
+      //                                            scatterAngleMin, scatterAngleMax))
+      // {
+      //   continue;
+      // }
 
       auto tot1 = hit1->getToT();
       auto tot2 = hit2->getToT();
@@ -62,6 +62,8 @@ void CalibrationTools::selectForTOF(const JPetEvent& event, JPetStatistics& stat
       bool anih2 = (tot2 > totCutAnniMin && tot2 < totCutAnniMax);
       bool deex1 = (tot1 > totCutDeexMin && tot1 < totCutDeexMax);
       bool deex2 = (tot2 > totCutDeexMin && tot2 < totCutDeexMax);
+
+      // Check if scatter - radius
 
       // Time differences and strip ID to be assigned
       double aTime = 0.0, dTime = 0.0;
