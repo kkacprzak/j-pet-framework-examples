@@ -1,6 +1,6 @@
 ################################################################################
 ## Data analysis project based on J-PET Framework
-## Created by J-PET Framework developers 2016-2020
+## Created by J-PET Framework developers 2016-2025
 ##
 ## Description:
 ##   Data reconstruction in Modular J-PET Detector
@@ -25,9 +25,11 @@ set(AUXILLIARY_FILES
   README.md
   userParamsModular.json
   calibration_scripts/README.md
+  calibration_scripts/channel_offests.C
+  calibration_scripts/cosmic_tof.C
+  calibration_scripts/hit_tdiff_effvel.C
   calibration_scripts/matrix_offests.C
   calibration_scripts/tof_synchro.C
-  calibration_scripts/hit_tdiff_effvel.C
 )
 
 ################################################################################
@@ -35,15 +37,49 @@ set(AUXILLIARY_FILES
 set(projectBinary ${projectName}.x)
 project(${projectName} CXX) # using only C++
 
+######################################################################
 ## Name your header files with .h extension and source files with .cpp
-file(GLOB HEADERS *.h)
-file(GLOB SOURCES *.cpp)
+## Add your own HEADERS/SOURCES
+set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/NTupler.h
+            ../CommonTools/TimeWindowCreatorTools.h
+            ../CommonTools/SignalFinderTools.h
+            ../CommonTools/SignalTransformerTools.h
+            ../CommonTools/HitFinderTools.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/CalibrationTools.h
+            )
+
+set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+            TimeWindowCreator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/NTupler.cpp
+            ../CommonTools/TimeWindowCreatorTools.cpp
+            ../CommonTools/SignalFinderTools.cpp
+            ../CommonTools/SignalTransformerTools.cpp
+            ../CommonTools/HitFinderTools.cpp
+            ../CommonTools/EventCategorizerTools.cpp
+            ../CommonTools/CalibrationTools.cpp
+            )
 
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})
 target_link_libraries(${projectBinary} JPetFramework::JPetFramework)
 
 add_custom_target(clean_data_${projectName}
-  COMMAND rm -f *.tslot.*.root *.phys.*.root *.sig.root
+  COMMAND rm -f *.tslot.root *.hits.root *.sig.root *evt.root
 )
 
 ################################################################################

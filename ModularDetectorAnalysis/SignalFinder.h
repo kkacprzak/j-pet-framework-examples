@@ -16,7 +16,7 @@
 #ifndef SIGNALFINDER_H
 #define SIGNALFINDER_H
 
-#include "SignalFinderTools.h"
+#include "../CommonTools/SignalFinderTools.h"
 #include <JPetUserTask/JPetUserTask.h>
 #include <Signals/JPetPMSignal/JPetPMSignal.h>
 #include <boost/property_tree/ptree.hpp>

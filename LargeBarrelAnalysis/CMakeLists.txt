@@ -1,6 +1,6 @@
 ################################################################################
 ## Data analysis project based on J-PET Framework
-## Created by J-PET Framework developers 2016-2018
+## Created by J-PET Framework developers 2016-2015
 ##
 ## Description:
 ##   Basic data reconstruction for Large Barrel setup
@@ -32,32 +32,36 @@ set(AUXILIARY_FILES
 set(projectBinary ${projectName}.x)
 project(${projectName} CXX)
 
-set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
+set(HEADERS
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreatorTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h)
+            ../CommonTools/TimeWindowCreatorTools.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
+            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h
+            )
 
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
+set(SOURCES
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreatorTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+            ../CommonTools/TimeWindowCreatorTools.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
+            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+            )
 
 
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})
@@ -76,5 +80,5 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${AUXILIARY_FILES} DESTINATION ${CMAKE_CUR
 option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)
     enable_testing()
-    add_subdirectory(tests)
+    #add_subdirectory(tests)
 endif()

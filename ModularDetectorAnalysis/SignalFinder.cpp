@@ -14,7 +14,6 @@
  */
 
 #include "SignalFinder.h"
-#include "SignalFinderTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetTimeWindow/JPetTimeWindow.h>
 #include <JPetWriter/JPetWriter.h>

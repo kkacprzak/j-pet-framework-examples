@@ -16,7 +16,7 @@
 using namespace std;
 
 #include "EventFinder.h"
-#include "EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include <Hits/JPetMCRecoHit/JPetMCRecoHit.h>
 #include <Hits/JPetRecoHit/JPetRecoHit.h>
 #include <JPetOptionsTools/JPetOptionsTools.h>

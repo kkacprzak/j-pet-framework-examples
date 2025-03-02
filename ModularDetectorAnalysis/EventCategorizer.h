@@ -16,7 +16,7 @@
 #ifndef EVENTCATEGORIZER_H
 #define EVENTCATEGORIZER_H
 
-#include "EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include <JPetEvent/JPetEvent.h>
 #include <JPetUserTask/JPetUserTask.h>
 #include <TVector3.h>

@@ -14,7 +14,7 @@
  */
 
 #include "EventAnalyzer.h"
-#include "../ModularDetectorAnalysis/EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include <Hits/JPetMCRecoHit/JPetMCRecoHit.h>
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetRawMCHit/JPetRawMCHit.h>

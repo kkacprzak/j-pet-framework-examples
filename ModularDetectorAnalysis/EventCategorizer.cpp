@@ -14,8 +14,8 @@
  */
 
 #include "EventCategorizer.h"
-#include "CalibrationTools.h"
-#include "EventCategorizerTools.h"
+#include "../CommonTools/CalibrationTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetWriter/JPetWriter.h>
 #include <boost/property_tree/json_parser.hpp>

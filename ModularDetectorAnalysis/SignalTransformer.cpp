@@ -14,7 +14,7 @@
  */
 
 #include "SignalTransformer.h"
-#include "SignalTransformerTools.h"
+#include "../CommonTools/SignalTransformerTools.h"
 #include <boost/property_tree/json_parser.hpp>
 
 using namespace jpet_options_tools;

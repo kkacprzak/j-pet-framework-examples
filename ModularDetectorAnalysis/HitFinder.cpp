@@ -14,7 +14,7 @@
  */
 
 #include "HitFinder.h"
-#include "HitFinderTools.h"
+#include "../CommonTools/HitFinderTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetWriter/JPetWriter.h>
 #include <boost/property_tree/json_parser.hpp>

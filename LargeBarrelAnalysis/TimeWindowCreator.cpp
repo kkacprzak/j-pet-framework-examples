@@ -14,7 +14,7 @@
  */
 
 #include "TimeWindowCreator.h"
-#include "TimeWindowCreatorTools.h"
+#include "../CommonTools/TimeWindowCreatorTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetTaskIO/JPetInputHandlerHLD.h>
 #include <JPetWriter/JPetWriter.h>
@@ -87,46 +87,70 @@ bool TimeWindowCreator::init()
 
 bool TimeWindowCreator::exec()
 {
-  if (auto event = dynamic_cast<EventIII* const>(fEvent))
+  if (auto event = dynamic_cast<JPetHLDdata* const>(fEvent))
   {
-    int kTDCChannels = event->GetTotalNTDCChannels();
-    if (fSaveControlHistos)
-    {
-      getStatistics().fillHistogram("sig_ch_per_time_slot", kTDCChannels);
-    }
-    // Loop over all TDC channels in file
-    auto tdcChannels = event->GetTDCChannelsArray();
-    for (int i = 0; i < kTDCChannels; ++i)
-    {
-      auto tdcChannel = dynamic_cast<TDCChannel* const>(tdcChannels->At(i));
-      auto channelID = tdcChannel->GetChannel();
+    vector<JPetChannelSignal> allChannelSignals;
+    unordered_map<int, vector<JPetChannelSignal>> singleChannelSignals;
 
-      // Skip trigger signals from TRB - every 65th
-      if (channelID % 65 == 0)
-        continue;
-
-      // Check if channel exists in database from loaded local file
-      if (getParamBank().getChannels().count(channelID) == 0)
+    for (auto& endp_data : event->fOriginalData)
+    {
+      unsigned int address = endp_data.first;
+      if (fChannelOffsets.count(address) == 0)
       {
-        WARNING(Form("DAQ Channel %d appears in data but does not exist in the detector setup.", channelID));
         continue;
       }
-      // Get channel for corresponding number
-      auto& channel = getParamBank().getChannel(channelID);
+      unsigned int channel_offset = fChannelOffsets.at(address);
 
-      // Building Signal Channels for this Channel
-      auto allSigChs =
-          TimeWindowCreatorTools::buildSigChs(tdcChannel, channel, fTimeCalibration, fMaxTime, fMinTime, getStatistics(), fSaveControlHistos);
+      std::vector<unpacker::hit_t>& data = endp_data.second;
 
-      // Sort Signal Channels in time
-      TimeWindowCreatorTools::sortByTime(allSigChs);
+      for (auto& hit : data)
+      {
+        int channelNumber = channel_offset + hit.channel_id;
 
-      // Flag with Good or Corrupted
-      TimeWindowCreatorTools::flagSigChs(allSigChs, getStatistics(), fSaveControlHistos);
+        // Skip trigger signals - every 65th
+        if (channelNumber % 65 == 0)
+        {
+          continue;
+        }
 
-      // Save result
-      saveSigChs(allSigChs);
+        // Skip if the channel number is absent in the configuration
+        if (getParamBank().getChannels().count(channelNumber) == 0)
+        {
+          if (fSaveControlHistos)
+          {
+            getStatistics().fillHistogram("wrong_channel", channelNumber);
+          }
+          continue;
+        }
+
+        auto& channel = getParamBank().getChannel(channelNumber);
+        double offset = fConstansTree.get("channel_offests." + to_string(channel.getID()), 0.0);
+
+        double time = hit.time / 1000.;
+
+        time = time - (fMaxTime - fMinTime);
+        time *= -1.;
+
+        if (time < fMinTime || time > fMaxTime)
+        {
+          continue;
+        }
+
+        auto sigCh = TimeWindowCreatorTools::generateChannelSignal(
+            time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, offset);
+        singleChannelSignals[channel.getID()].push_back(sigCh);
+      }
     }
+
+    for (auto& chSigs : singleChannelSignals)
+    {
+      TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
+      // Sort Signal Channels in time
+      TimeWindowCreatorTools::sortByTime(chSigs.second);
+      allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
+    }
+    // Save result
+    saveChannelSignals(allChannelSignals);
   }
   else
   {
@@ -141,44 +165,49 @@ bool TimeWindowCreator::terminate()
   return true;
 }
 
-void TimeWindowCreator::saveSigChs(const vector<JPetSigCh>& sigChVec)
+void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& channelSigVec)
 {
-  for (auto& sigCh : sigChVec)
+  if (fSaveControlHistos)
   {
-    fOutputEvents->add<JPetSigCh>(sigCh);
+    getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
+  }
+
+  for (auto& channelSig : channelSigVec)
+  {
+    fOutputEvents->add<JPetChannelSignal>(channelSig);
     if (fSaveControlHistos)
     {
-      getStatistics().getHisto1D("pm_occ")->Fill(sigCh.getChannel().getPM().getID());
-      getStatistics().getHisto1D(Form("pm_occ_thr%d", sigCh.getChannel().getThresholdNumber()))->Fill(sigCh.getChannel().getPM().getID());
+      getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
+      getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
     }
   }
 }
 
 void TimeWindowCreator::initialiseHistograms()
 {
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 50, 0.5, 50.5), "Channels Signal in Time Slot",
+                                          "Number of Time Slots");
+
+  // Channels and PMs IDs from Param Bank
+  auto minChannelID = getParamBank().getChannels().begin()->first;
+  auto maxChannelID = getParamBank().getChannels().rbegin()->first;
 
   auto minPMID = getParamBank().getPMs().begin()->first;
-  auto maxPMID = getParamBank().getPMs().end()->first;
+  auto maxPMID = getParamBank().getPMs().rbegin()->first;
 
-  getStatistics().createHistogram(new TH1F("pm_occ", "Signal Channels per PM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5));
-  getStatistics().getHisto1D("pm_occ")->GetXaxis()->SetTitle("PM ID)");
-  getStatistics().getHisto1D("pm_occ")->GetYaxis()->SetTitle("Number of Signal Channels");
+  // Wrong configuration
+  getStatistics().createHistogramWithAxes(new TH1D("wrong_channel", "Channel IDs not found in the json configuration",
+                                                   maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
+                                          "Channel ID", "Number of Channel Signals");
 
-  for (int i = 1; i <= kNumOfThresholds; i++)
-  {
-    getStatistics().createHistogram(
-        new TH1F(Form("pm_occ_thr%d", i), Form("Signal Channels per PM on THR %d", i), maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5));
-    getStatistics().getHisto1D(Form("pm_occ_thr%d", i))->GetXaxis()->SetTitle("PM ID)");
-    getStatistics().getHisto1D(Form("pm_occ_thr%d", i))->GetYaxis()->SetTitle("Number of Signal Channels");
-  }
-
-  getStatistics().createHistogramWithAxes(new TH1D("sig_ch_per_time_slot", "Signal Channels Per Time Slot", 250, -0.125, 999.875),
-                                          "Signal Channels in Time Slot", "Number of Time Slots");
+  getStatistics().createHistogramWithAxes(new TH1D("pm_occ", "Channels Signals per PM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "PM ID",
+                                          "Number of Channel Signals");
 
   for (int i = 1; i <= kNumOfThresholds; i++)
   {
-    getStatistics().createHistogramWithAxes(new TH1D(Form("pm_occupation_thr%d", i), Form("Signal Channels per PM on THR %d", i), 385, 0.5, 385.5),
-                                            "PM ID)", "Number of Signal Channels");
+    getStatistics().createHistogramWithAxes(
+        new TH1D(Form("pm_occ_thr%d", i), Form("Channels Signals per PM on THR %d", i), maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "PM ID",
+        "Number of Channel Signals");
   }
 
   getStatistics().createHistogramWithAxes(new TH1D("good_vs_bad_sigch", "Number of good and corrupted SigChs created", 3, 0.5, 3.5), "Quality",

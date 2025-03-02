@@ -20,7 +20,7 @@
 #include <JPetTimeWindow/JPetTimeWindow.h>
 #include <JPetUserTask/JPetUserTask.h>
 #include <Signals/JPetChannelSignal/JPetChannelSignal.h>
-
+#include <boost/property_tree/ptree.hpp>
 #include <map>
 #include <set>
 
@@ -52,6 +52,7 @@ protected:
   const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_double";
   const std::string kMainStripKey = "TimeWindowCreator_MainStrip_int";
+  boost::property_tree::ptree fConstansTree;
   const int kNumOfThresholds = 4;
   bool fSaveControlHistos = true;
   double fMinTime = -1.e6;

@@ -14,7 +14,7 @@
  */
 
 #include "NTupler.h"
-#include "../ModularDetectorAnalysis/HitFinderTools.h"
+#include "../CommonTools/HitFinderTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <iostream>
 

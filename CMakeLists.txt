@@ -175,11 +175,11 @@ endif()
 ################################################################################
 ## Directories with examples
 add_subdirectory(ModularDetectorAnalysis)
-add_subdirectory(ListmodeExport)
 add_subdirectory(MCGeantAnalysis)
-add_subdirectory(CernBeamAnalysis)
 add_subdirectory(LargeBarrelAnalysis)
 
+#add_subdirectory(ListmodeExport)
+#add_subdirectory(CernBeamAnalysis)
 #add_subdirectory(RedModuleAnalysis)
 #add_subdirectory(opsAnalysis)
 #add_subdirectory(Imaging)

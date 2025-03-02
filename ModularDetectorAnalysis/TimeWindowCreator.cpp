@@ -14,7 +14,7 @@
  */
 
 #include "TimeWindowCreator.h"
-#include "TimeWindowCreatorTools.h"
+#include "../CommonTools/TimeWindowCreatorTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetTaskIO/JPetInputHandlerHLD.h>
 #include <JPetWriter/JPetWriter.h>
@@ -141,14 +141,15 @@ bool TimeWindowCreator::exec()
       }
     }
 
-    for (auto& sigchs : singleChannelSignals)
+    for (auto& chSigs : singleChannelSignals)
     {
-      TimeWindowCreatorTools::flagChannelSignals(sigchs.second, getStatistics(), fSaveControlHistos);
+      TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
       // Sort Signal Channels in time
-      TimeWindowCreatorTools::sortByTime(sigchs.second);
-      // Save result
-      saveChannelSignals(sigchs.second);
+      TimeWindowCreatorTools::sortByTime(chSigs.second);
+      allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
     }
+    // Save result
+    saveChannelSignals(allChannelSignals);
   }
   else
   {
@@ -266,7 +267,6 @@ void TimeWindowCreator::initialiseHistograms()
                                           "Number of TT pairs");
 
   // Time differences of consecutive lead thr1 SigChs after filtering
-
   getStatistics().createHistogramWithAxes(new TH1D("consec_lead_THR1", "Time diff of consecutive leadings THR1", 200, 0.0, 50000.0), "Time Diff [ps]",
                                           "Number of channel signal pairs");
 }
