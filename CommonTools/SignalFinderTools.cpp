@@ -18,10 +18,13 @@
 
 using namespace std;
 
+const SignalFinderTools::Permutation SignalFinderTools::kIdentity = {0, 1, 2, 3};
+
 /**
  * Method returns a map of vectors of JPetChannelSignal ordered by photomultiplier ID
  */
-const map<int, vector<JPetChannelSignal>> SignalFinderTools::getChannelSignalsByPM(const JPetTimeWindow* timeWindow, bool useCorruptedChannelSignal)
+const map<int, vector<JPetChannelSignal>> SignalFinderTools::getChannelSignalsByPM(const JPetTimeWindow* timeWindow, bool useCorruptedChannelSignal,
+                                                                                   int refPMID)
 {
   map<int, vector<JPetChannelSignal>> chSigsPMMap;
   if (!timeWindow)
@@ -34,17 +37,22 @@ const map<int, vector<JPetChannelSignal>> SignalFinderTools::getChannelSignalsBy
   for (unsigned int i = 0; i < nChannelSignals; i++)
   {
     auto chSig = dynamic_cast<const JPetChannelSignal&>(timeWindow->operator[](i));
+    auto pmID = chSig.getChannel().getPM().getID();
+    if (pmID == refPMID)
+    {
+      chSig.setRecoFlag(JPetRecoSignal::Good);
+    }
+
     if (!useCorruptedChannelSignal && chSig.getRecoFlag() == JPetRecoSignal::Corrupted)
     {
       continue;
     }
-    auto pmtID = chSig.getChannel().getPM().getID();
-    auto search = chSigsPMMap.find(pmtID);
+    auto search = chSigsPMMap.find(pmID);
     if (search == chSigsPMMap.end())
     {
       vector<JPetChannelSignal> tmp;
       tmp.push_back(chSig);
-      chSigsPMMap.insert(pair<int, vector<JPetChannelSignal>>(pmtID, tmp));
+      chSigsPMMap.insert(pair<int, vector<JPetChannelSignal>>(pmID, tmp));
     }
     else
     {
@@ -59,12 +67,24 @@ const map<int, vector<JPetChannelSignal>> SignalFinderTools::getChannelSignalsBy
  */
 vector<JPetPMSignal> SignalFinderTools::buildAllSignals(const map<int, vector<JPetChannelSignal>>& chSigByPM, double chSigEdgeMaxTime,
                                                         double chSigLeadTrailMaxTime, int numberOfThrs, JPetStatistics& stats, bool saveHistos,
-                                                        SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree)
+                                                        SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree,
+                                                        ThresholdOrderings thresholdOrderings)
 {
   vector<JPetPMSignal> allSignals;
+
   for (auto& chSigPair : chSigByPM)
   {
-    auto signals = buildPMSignals(chSigPair.second, chSigEdgeMaxTime, chSigLeadTrailMaxTime, numberOfThrs, stats, saveHistos, type, calibTree);
+    Permutation P;
+    if (thresholdOrderings.empty())
+    {
+      P = kIdentity;
+    }
+    else
+    {
+      P = thresholdOrderings.at(chSigPair.first);
+    }
+
+    auto signals = buildPMSignals(chSigPair.second, chSigEdgeMaxTime, chSigLeadTrailMaxTime, numberOfThrs, stats, saveHistos, type, calibTree, P);
     allSignals.insert(allSignals.end(), signals.begin(), signals.end());
   }
   return allSignals;
@@ -79,7 +99,8 @@ vector<JPetPMSignal> SignalFinderTools::buildAllSignals(const map<int, vector<JP
  */
 vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelSignal>& chSigByPM, double chSigEdgeMaxTime,
                                                        double chSigLeadTrailMaxTime, int numberOfThrs, JPetStatistics& stats, bool saveHistos,
-                                                       SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree)
+                                                       SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree,
+                                                       Permutation ordering)
 {
   vector<JPetPMSignal> pmSigVec;
   vector<JPetChannelSignal> unusedLeads;
@@ -92,11 +113,11 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
   {
     if (chSig.getEdgeType() == JPetChannelSignal::Leading)
     {
-      leadChSigs.at(chSig.getChannel().getThresholdNumber() - 1).push_back(chSig);
+      leadChSigs.at(ordering[chSig.getChannel().getThresholdNumber() - 1]).push_back(chSig);
     }
     else if (chSig.getEdgeType() == JPetChannelSignal::Trailing)
     {
-      trailChSigs.at(chSig.getChannel().getThresholdNumber() - 1).push_back(chSig);
+      trailChSigs.at(ordering[chSig.getChannel().getThresholdNumber() - 1]).push_back(chSig);
     }
   }
 
@@ -126,6 +147,12 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
       continue;
     }
 
+    if (saveHistos)
+    {
+      stats.fillHistogram("lead_trail_thr1_diff",
+                          trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getTime() - leadChSigs.at(0).at(0).getTime());
+    }
+
     // Modifying flag if needed
     if (leadChSigs.at(0).at(0).getRecoFlag() == JPetRecoSignal::Corrupted ||
         trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getRecoFlag() == JPetRecoSignal::Corrupted)
@@ -133,24 +160,38 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
       pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
     }
 
-    // Adding Lead-Trail pair if found on THR 2
-    int nextThrChannelSignalIndex = findChannelSignalOnNextThr(leadChSigs.at(0).at(0).getTime(), chSigEdgeMaxTime, leadChSigs.at(1));
-    if (nextThrChannelSignalIndex != -1)
+    // Adding Lead-Trail pairs if found on other THR
+    for (unsigned int kk = 1; kk < numberOfThrs; kk++)
     {
-      int closestTrailingChannelSignalTHR2 =
-          findTrailingChannelSignal(leadChSigs.at(1).at(nextThrChannelSignalIndex), chSigLeadTrailMaxTime, trailChSigs.at(1));
-      if (closestTrailingChannelSignalTHR2 != -1)
+      int nextThrChannelSignalIndex = findChannelSignalOnNextThr(leadChSigs.at(0).at(0).getTime(), chSigEdgeMaxTime, leadChSigs.at(kk));
+
+      if (nextThrChannelSignalIndex != -1)
       {
-        if (pmSig.addLeadTrailPair(leadChSigs.at(1).at(nextThrChannelSignalIndex), trailChSigs.at(1).at(closestTrailingChannelSignalTHR2)))
+        int closestTrailingChannelSignal =
+            findTrailingChannelSignal(leadChSigs.at(kk).at(nextThrChannelSignalIndex), chSigLeadTrailMaxTime, trailChSigs.at(kk));
+        if (closestTrailingChannelSignal != -1)
         {
-          // Modifying flag if needed
-          if (leadChSigs.at(1).at(nextThrChannelSignalIndex).getRecoFlag() == JPetRecoSignal::Corrupted ||
-              trailChSigs.at(1).at(closestTrailingChannelSignalTHR2).getRecoFlag() == JPetRecoSignal::Corrupted)
+          if (pmSig.addLeadTrailPair(leadChSigs.at(kk).at(nextThrChannelSignalIndex), trailChSigs.at(kk).at(closestTrailingChannelSignal)))
           {
-            pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
+            if (saveHistos)
+            {
+              stats.fillHistogram(Form("lead_trail_thr%d_diff", kk + 1), trailChSigs.at(kk).at(closestTrailingChannelSignal).getTime() -
+                                                                             leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime());
+
+              stats.fillHistogram(Form("lead_thr1_thr%d_diff", kk + 1),
+                                  leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime() - leadChSigs.at(0).at(0).getTime());
+            }
+
+            // Modifying flag if needed
+            if (leadChSigs.at(kk).at(nextThrChannelSignalIndex).getRecoFlag() == JPetRecoSignal::Corrupted ||
+                trailChSigs.at(kk).at(closestTrailingChannelSignal).getRecoFlag() == JPetRecoSignal::Corrupted)
+            {
+              pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
+            }
+
+            trailChSigs.at(kk).erase(trailChSigs.at(kk).begin() + closestTrailingChannelSignal);
+            leadChSigs.at(kk).erase(leadChSigs.at(kk).begin() + nextThrChannelSignalIndex);
           }
-          trailChSigs.at(1).erase(trailChSigs.at(1).begin() + closestTrailingChannelSignalTHR2);
-          leadChSigs.at(1).erase(leadChSigs.at(1).begin() + nextThrChannelSignalIndex);
         }
       }
     }
@@ -207,11 +248,11 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
 /**
  * Method finds Signal Channels that belong to the same leading edge
  */
-int SignalFinderTools::findChannelSignalOnNextThr(double chSigValue, double chSigEdgeMaxTime, const vector<JPetChannelSignal>& chSigVec)
+int SignalFinderTools::findChannelSignalOnNextThr(double chSigTime, double chSigEdgeMaxTime, const vector<JPetChannelSignal>& chSigVec)
 {
   for (size_t i = 0; i < chSigVec.size(); i++)
   {
-    if (fabs(chSigValue - chSigVec.at(i).getTime()) < chSigEdgeMaxTime)
+    if (fabs(chSigTime - chSigVec.at(i).getTime()) < chSigEdgeMaxTime)
     {
       return i;
     }
@@ -276,4 +317,58 @@ double SignalFinderTools::calculatePMSignalToT(JPetPMSignal& pmSignal, SignalFin
   double totNormA = calibTree.get("sipm." + to_string(pmSignal.getPM().getID()) + ".tot_factor_a", 1.0);
   double totNormB = calibTree.get("sipm." + to_string(pmSignal.getPM().getID()) + ".tot_factor_b", 0.0) / 1000.0;
   return tot * totNormA + totNormB;
+}
+
+/**
+ * Method finds a 4-element permutation which has to be applied to threshold numbers
+ * to have them sorted by increasing threshold values.
+ *
+ * The ordering may be different for each PMT, therefore the method creates a map
+ * with PMT ID numbers as keys and 4-element permutations as values.
+ */
+SignalFinderTools::ThresholdOrderings SignalFinderTools::findThresholdOrder(const JPetParamBank& bank)
+{
+  ThresholdOrderings orderings;
+  std::map<PMID, ThresholdValues> thr_values_per_pm;
+
+  for (auto& channel : bank.getChannels())
+  {
+    PMID pmID = channel.second->getPM().getID();
+
+    if (channel.second->getThresholdNumber() > kMaxNumberOfThresholds)
+    {
+      ERROR("Threshold number in configuration is larger than maximum.");
+      return orderings;
+    }
+
+    thr_values_per_pm[pmID][channel.second->getThresholdNumber() - 1] = channel.second->getThresholdValue();
+  }
+
+  for (auto& pm : thr_values_per_pm)
+  {
+    permuteThresholdsByValue(pm.second, orderings[pm.first]);
+  }
+
+  return orderings;
+}
+
+/**
+ * Helper method for findThresholdOrders which constructs a single permutation
+ * based on the threshold values on a single PMT
+ *
+ * @param threshold_values array of floating-point values of voltage thresholds set on
+ * front-end thresholds 1-4
+ * @param new_ordering a permutation of thresholds 1-4 such that new_ordering[k] indicates the place of
+ * threshold no. k (k in 0,1,2,3) in an array of thresholds sorted by voltage value
+ */
+void SignalFinderTools::permuteThresholdsByValue(const ThresholdValues& thresholdValues, Permutation& newOrdering)
+{
+  Permutation indices = kIdentity;
+
+  sort(indices.begin(), indices.end(), [&](const int& a, const int& b) { return (thresholdValues.at(a) < thresholdValues.at(b)); });
+
+  for (unsigned short i = 0; i < kMaxNumberOfThresholds; ++i)
+  {
+    newOrdering[indices[i]] = i;
+  }
 }

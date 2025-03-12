@@ -40,15 +40,26 @@ public:
     kThresholdRectangular,
     kThresholdTrapeze
   };
-  static const std::map<int, std::vector<JPetChannelSignal>> getChannelSignalsByPM(const JPetTimeWindow* timeWindow, bool useCorruptedSigCh);
+
+  static const unsigned short kMaxNumberOfThresholds = 4;
+  using ThresholdValues = std::array<float, kMaxNumberOfThresholds>;
+  using PMID = unsigned int;
+  using Permutation = std::array<unsigned int, SignalFinderTools::kMaxNumberOfThresholds>;
+  using ThresholdOrderings = std::map<PMID, Permutation>;
+  static const Permutation kIdentity;
+
+  static const std::map<int, std::vector<JPetChannelSignal>> getChannelSignalsByPM(const JPetTimeWindow* timeWindow, bool useCorruptedSigCh,
+                                                                                   int refPMID);
 
   static std::vector<JPetPMSignal> buildAllSignals(const std::map<int, std::vector<JPetChannelSignal>>& chSigByPM, double chSigEdgeMaxTime,
                                                    double chSigLeadTrailMaxTime, int numberOfThrs, JPetStatistics& stats, bool saveHistos,
-                                                   SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree);
+                                                   SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree,
+                                                   ThresholdOrderings thresholdOrderings);
 
   static std::vector<JPetPMSignal> buildPMSignals(const std::vector<JPetChannelSignal>& chSigByPM, double chSigEdgeMaxTime,
                                                   double chSigLeadTrailMaxTime, int numberOfThrs, JPetStatistics& stats, bool saveHistos,
-                                                  SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree);
+                                                  SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree,
+                                                  Permutation ordering = SignalFinderTools::kIdentity);
 
   static int findChannelSignalOnNextThr(double chSigValue, double chSigEdgeMaxTime, const std::vector<JPetChannelSignal>& chSigVec);
 
@@ -56,6 +67,10 @@ public:
                                        const std::vector<JPetChannelSignal>& trailingSigChVec);
 
   static double calculatePMSignalToT(JPetPMSignal& pmSignal, SignalFinderTools::ToTCalculationType type, boost::property_tree::ptree& calibTree);
+
+  static ThresholdOrderings findThresholdOrder(const JPetParamBank& bank);
+
+  static void permuteThresholdsByValue(const ThresholdValues& thresholdValues, Permutation& newOrdering);
 };
 
 #endif /* !SIGNALFINDERTOOLS_H */

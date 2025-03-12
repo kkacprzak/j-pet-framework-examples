@@ -84,7 +84,7 @@ bool SignalFinder::init()
     WARNING("Unrecognized name for method of calculating ToT provided: use simple, rectangular of trapeze. Using default simplified method.");
   }
 
-  // Get bool for using corrupted Signal Channels
+  // Get bool for using corrupted Channel Signals
   if (isOptionSet(fParams.getOptions(), kUseCorruptedChSigParamKey))
   {
     fUseCorruptedChannelSignals = getOptionAsBool(fParams.getOptions(), kUseCorruptedChSigParamKey);
@@ -138,11 +138,12 @@ bool SignalFinder::exec()
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
     // Distribute channel signals by PM IDs
-    auto& chSigsByPM = SignalFinderTools::getChannelSignalsByPM(timeWindow, fUseCorruptedChannelSignals);
+    auto& chSigsPMMap = SignalFinderTools::getChannelSignalsByPM(timeWindow, fUseCorruptedChannelSignals, -1);
+
     // Building photomultiplier signals
-    auto allSignals = SignalFinderTools::buildAllSignals(chSigsByPM, fEdgeMaxTime, fLeadTrailMaxTime, kNumOfThresholds, getStatistics(),
-                                                         fSaveControlHistos, fToTCalcType, fConstansTree);
-    // Save
+    auto allSignals = SignalFinderTools::buildAllSignals(chSigsPMMap, fEdgeMaxTime, fLeadTrailMaxTime, kNumOfThresholds, getStatistics(),
+                                                         fSaveControlHistos, fToTCalcType, fConstansTree, fThresholdOrderings);
+
     savePMSignals(allSignals);
   }
   else
@@ -224,4 +225,20 @@ void SignalFinder::initialiseHistograms()
   getStatistics().createHistogramWithAxes(new TH2D("pmsig_tot_sipm_id", "SiPM Signal Time over Threshold per SiPM ID", maxPMID - minPMID + 1,
                                                    minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fToTHistoUpperLimit),
                                           "SiPM ID", "ToT [ps]");
+
+  for (unsigned int thr = 1; thr <= kNumOfThresholds; thr++)
+  {
+    getStatistics().createHistogramWithAxes(new TH1D(Form("lead_trail_thr%d_diff", thr),
+                                                     Form("Time Difference between leading and trailing Signal Channels THR%d in found signals", thr),
+                                                     200, 0.0, fLeadTrailMaxTime),
+                                            "time diff [ps]", "Number of Signal Channels Pairs");
+
+    if (thr > 1)
+    {
+      getStatistics().createHistogramWithAxes(new TH1D(Form("lead_thr1_thr%d_diff", thr),
+                                                       Form("Time Difference between leading Signal Channels THR1 and THR%d in found signals", thr),
+                                                       200, -fEdgeMaxTime, fEdgeMaxTime),
+                                              "time diff [ps]", "Number of Signal Channels Pairs");
+    }
+  }
 }

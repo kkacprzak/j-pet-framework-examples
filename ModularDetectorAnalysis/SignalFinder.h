@@ -47,18 +47,22 @@ protected:
   const std::string kLeadTrailMaxTimeParamKey = "SignalFinder_LeadTrailMaxTime_double";
   const std::string kRequireAllThresholdsParamKey = "SignalFinder_RequireAllThresholds_bool";
   const std::string kToTCalculationTypeParamKey = "SignalFinder_ToTCalculationType_std::string";
-  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   const std::string kToTHistoUpperLimitParamKey = "ToTHisto_UpperLimit_double";
+  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
+  const std::string kOrderThresholdsByValueKey = "SignalFinder_OrderThresholdsByValue_bool";
   const int kNumOfThresholds = 2;
   boost::property_tree::ptree fConstansTree;
   SignalFinderTools::ToTCalculationType fToTCalcType = SignalFinderTools::kSimplified;
+  SignalFinderTools::ThresholdOrderings fThresholdOrderings;
   double fToTHistoUpperLimit = 200000.0;
   double fLeadTrailMaxTime = 200000.0;
   double fEdgeMaxTime = 5000.0;
   double fScalingFactor = 0.0001;
   bool fRequireAllThresholds = false;
   bool fUseCorruptedChannelSignals = false;
+  bool fOrderThresholdsByValue = false;
+
   bool fSaveControlHistos = true;
   void initialiseHistograms();
 };

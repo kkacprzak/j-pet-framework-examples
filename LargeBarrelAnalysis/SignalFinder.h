@@ -16,9 +16,10 @@
 #ifndef SIGNALFINDER_H
 #define SIGNALFINDER_H
 
-#include <JPetRawSignal/JPetRawSignal.h>
+#include "../CommonTools/SignalFinderTools.h"
 #include <JPetUserTask/JPetUserTask.h>
-#include "SignalFinderTools.h"
+#include <Signals/JPetPMSignal/JPetPMSignal.h>
+#include <boost/property_tree/ptree.hpp>
 #include <vector>
 
 class JPetWriter;
@@ -30,7 +31,7 @@ class JPetWriter;
  * Parameters for time window values used in tools can be specified in user options,
  * default are provided.
  */
-class SignalFinder: public JPetUserTask
+class SignalFinder : public JPetUserTask
 {
 public:
   explicit SignalFinder(const char* name);
@@ -41,17 +42,26 @@ public:
 
 protected:
   SignalFinderTools::ThresholdOrderings fThresholdOrderings;
-  void saveRawSignals(const std::vector<JPetRawSignal>& sigChVec);
+  void savePMSignals(const std::vector<JPetPMSignal>& pmSigVec);
   const std::string kUseCorruptedSigChParamKey = "SignalFinder_UseCorruptedSigCh_bool";
-  const std::string kLeadTrailMaxTimeParamKey = "SignalFinder_LeadTrailMaxTime_float";
+  const std::string kEdgeMaxTimeParamKey = "SignalFinder_EdgeMaxTime_double";
+  const std::string kLeadTrailMaxTimeParamKey = "SignalFinder_LeadTrailMaxTime_double";
+  const std::string kRequireAllThresholdsParamKey = "SignalFinder_RequireAllThresholds_bool";
+  const std::string kToTCalculationTypeParamKey = "SignalFinder_ToTCalculationType_std::string";
+  const std::string kToTHistoUpperLimitParamKey = "ToTHisto_UpperLimit_double";
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
-  const std::string kEdgeMaxTimeParamKey = "SignalFinder_EdgeMaxTime_float";
   const std::string kRefPMIDParamKey = "TimeCalibration_RefPMID_int";
   const std::string kOrderThresholdsByValueKey = "SignalFinder_OrderThresholdsByValue_bool";
+  const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
+  SignalFinderTools::ToTCalculationType fToTCalcType = SignalFinderTools::kSimplified;
+  boost::property_tree::ptree fConstansTree;
   const int kNumOfThresholds = 4;
-  double fSigChLeadTrailMaxTime = 23000.0;
-  double fSigChEdgeMaxTime = 5000.0;
-  bool fUseCorruptedSigCh = false;
+  double fToTHistoUpperLimit = 200000.0;
+  double fLeadTrailMaxTime = 200000.0;
+  double fEdgeMaxTime = 5000.0;
+  double fScalingFactor = 0.0001;
+  bool fRequireAllThresholds = false;
+  bool fUseCorruptedChannelSignals = false;
   bool fSaveControlHistos = true;
   bool fOrderThresholdsByValue = false;
   int fRefPMID = 385;
