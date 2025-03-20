@@ -16,8 +16,9 @@
 #ifndef SIGNALTRANSFORMER_H
 #define SIGNALTRANSFORMER_H
 
-#include "JPetRecoSignal/JPetRecoSignal.h"
 #include "JPetUserTask/JPetUserTask.h"
+#include "Signals/JPetMatrixSignal/JPetMatrixSignal.h"
+#include <boost/property_tree/ptree.hpp>
 
 class JPetWriter;
 
@@ -28,28 +29,25 @@ class JPetWriter;
  * Only time of the signal is set, the rest of available fields are set to -1,
  * also using corrupted signal, if indicated by user.
  */
-class SignalTransformer: public JPetUserTask
+class SignalTransformer : public JPetUserTask
 {
 public:
-	SignalTransformer(const char* name);
-	virtual ~SignalTransformer();
-	virtual bool init() override;
-	virtual bool exec() override;
-	virtual bool terminate() override;
+  SignalTransformer(const char* name);
+  virtual ~SignalTransformer();
+  virtual bool init() override;
+  virtual bool exec() override;
+  virtual bool terminate() override;
 
 protected:
-	void initialiseHistograms();
-	JPetRecoSignal createRecoSignal(const JPetRawSignal& rawSignal);
-	JPetPhysSignal createPhysSignal(const JPetRecoSignal& signals);
-	void correctForWalk(const JPetRecoSignal& recoSignal);
-	const std::string kUseCorruptedSignalsParamKey = "SignalTransformer_UseCorruptedSignals_bool";
-	const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
-	const std::string kWalkCorrConst1ParamKey = "SignalTransformer_WalkCorrConstThr1_float";
-	const std::string kWalkCorrConst2ParamKey = "SignalTransformer_WalkCorrConstThr2_float";
-        const std::string kWalkCorrConst3ParamKey = "SignalTransformer_WalkCorrConstThr3_float";
-	const std::string kWalkCorrConst4ParamKey = "SignalTransformer_WalkCorrConstThr4_float";
-	bool fUseCorruptedSignals = false;
-	bool fSaveControlHistos = true;
-	double fWalkCorrConst[4] = {0.,0.,0,0.};
+  void initialiseHistograms();
+  const std::string kUseCorruptedSignalsParamKey = "SignalTransformer_UseCorruptedSignals_bool";
+  const std::string kToTHistoUpperLimitParamKey = "ToTHisto_UpperLimit_double";
+  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
+  const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
+  void saveMatrixSignals(const std::vector<JPetMatrixSignal>& mtxSigVec);
+  boost::property_tree::ptree fConstansTree;
+  double fToTHistoUpperLimit = 200000.0;
+  bool fUseCorruptedSignals = false;
+  bool fSaveControlHistos = true;
 };
 #endif /* !SIGNALTRANSFORMER_H */

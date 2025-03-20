@@ -182,10 +182,10 @@ void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
     if (fSaveControlHistos)
     {
       getStatistics().fillHistogram("pmsig_multi", pmSig.getLeadTrailPairs().size());
-      getStatistics().fillHistogram("pmsig_sipm_id", pmSig.getPM().getID());
+      getStatistics().fillHistogram("pmsig_pm_id", pmSig.getPM().getID());
       if (pmSig.getToT() != 0.0)
       {
-        getStatistics().fillHistogram("pmsig_tot_sipm_id", pmSig.getPM().getID(), pmSig.getToT());
+        getStatistics().fillHistogram("pmsig_tot_pm_id", pmSig.getPM().getID(), pmSig.getToT());
       }
     }
   }
@@ -208,11 +208,11 @@ void SignalFinder::initialiseHistograms()
   getStatistics().setHistogramBinLabel("unused_chsig_thr", getStatistics().AxisLabel::kXaxis, binLabels2);
 
   getStatistics().createHistogramWithAxes(
-      new TH1D("unused_chsig_sipm", "Unused Signal Channels per SiPM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "SiPM ID",
+      new TH1D("unused_chsig_pm", "Unused Signal Channels per SiPM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "SiPM ID",
       "Number of Channel Signals");
 
   // Occupancies and multiplicities
-  getStatistics().createHistogramWithAxes(new TH1D("pmsig_sipm_id", "PM Signals per SiPM ID", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_pm_id", "PM Signals per SiPM ID", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
                                           "SiPM ID", "Number of PM Signals");
 
   getStatistics().createHistogramWithAxes(new TH1D("pmsig_multi", "PM Signal Multiplicity", 6, 0.5, 6.5), "Total number of ChSigs in PMSig",
@@ -222,7 +222,7 @@ void SignalFinder::initialiseHistograms()
                                           "Number of PM Signal in Time Window", "Number of Time Windows");
 
   // ToT of signals
-  getStatistics().createHistogramWithAxes(new TH2D("pmsig_tot_sipm_id", "SiPM Signal Time over Threshold per SiPM ID", maxPMID - minPMID + 1,
+  getStatistics().createHistogramWithAxes(new TH2D("pmsig_tot_pm_id", "SiPM Signal Time over Threshold per SiPM ID", maxPMID - minPMID + 1,
                                                    minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fToTHistoUpperLimit),
                                           "SiPM ID", "ToT [ps]");
 

@@ -48,8 +48,8 @@ protected:
   void saveChannelSignals(const std::vector<JPetChannelSignal>& channelSignalVec);
   void initialiseHistograms();
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
-  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_double";
+  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
   boost::property_tree::ptree fConstansTree;
   bool fSaveControlHistos = true;

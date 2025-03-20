@@ -37,12 +37,14 @@ set(HEADERS
             ../CommonTools/TimeWindowCreatorTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
             ../CommonTools/SignalFinderTools.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
+            ../CommonTools/SignalTransformerTools.h
+
             #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
             #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.h
             #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
             #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
             #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
             #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
             #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h
             )
@@ -53,12 +55,14 @@ set(SOURCES
             ../CommonTools/TimeWindowCreatorTools.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
             ../CommonTools/SignalFinderTools.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
+            ../CommonTools/SignalTransformerTools.cpp
+
             #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
             #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
             )

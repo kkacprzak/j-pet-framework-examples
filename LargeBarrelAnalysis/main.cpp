@@ -14,9 +14,9 @@
  */
 
 #include "SignalFinder.h"
+#include "SignalTransformer.h"
 #include "TimeWindowCreator.h"
 #include <JPetManager/JPetManager.h>
-// #include "SignalTransformer.h"
 // #include "HitFinder.h"
 
 using namespace std;
@@ -29,19 +29,19 @@ int main(int argc, const char* argv[])
 
     manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
     manager.registerTask<SignalFinder>("SignalFinder");
-    // manager.registerTask<SignalTransformer>("SignalTransformer");
+    manager.registerTask<SignalTransformer>("SignalTransformer");
     // manager.registerTask<HitFinder>("HitFinder");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot.calib");
-    manager.useTask("SignalFinder", "tslot.calib", "raw.sig");
-    // manager.useTask("SignalTransformer", "raw.sig", "phys.sig");
-    // manager.useTask("HitFinder", "phys.sig", "hits");
+    manager.useTask("SignalFinder", "tslot.calib", "pm.sig");
+    manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
+    // manager.useTask("HitFinder", "mtx.sig", "hits");
 
     manager.run(argc, argv);
   }
   catch (const std::exception& except)
   {
-    std::cerr << "Unrecoverable error occured:" << except.what() << "Exiting the program!" << std::endl;
+    std::cerr << "Unrecoverable error occured: " << except.what() << "Exiting the program!" << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

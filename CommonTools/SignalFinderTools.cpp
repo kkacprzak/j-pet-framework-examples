@@ -223,7 +223,7 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
       for (auto chSig : unusedLeads)
       {
         stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber() - 1);
-        stats.fillHistogram("unused_chsig_sipm", chSig.getChannel().getPM().getID());
+        stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
       }
 
       for (int jj = 0; jj < numberOfThrs; jj++)
@@ -231,12 +231,12 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
         for (auto chSig : leadChSigs.at(jj))
         {
           stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber() - 1);
-          stats.fillHistogram("unused_chsig_sipm", chSig.getChannel().getPM().getID());
+          stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
         }
         for (auto chSig : trailChSigs.at(jj))
         {
           stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber());
-          stats.fillHistogram("unused_chsig_sipm", chSig.getChannel().getPM().getID());
+          stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
         }
       }
     }

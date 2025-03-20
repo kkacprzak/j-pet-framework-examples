@@ -75,6 +75,7 @@ bool TimeWindowCreator::init()
   for (auto& dm : getParamBank().getDataModules())
   {
     fChannelOffsets[dm.second->getTBRNetAddress()] = dm.second->getChannelsOffset();
+    // std::cout << "Address: " << std::hex << dm.second->getTBRNetAddress() << " Offset: " << dm.second->getChannelsOffset() << std::endl;
   }
 
   // Control histograms
@@ -95,6 +96,7 @@ bool TimeWindowCreator::exec()
     for (auto& endp_data : event->fOriginalData)
     {
       unsigned int address = endp_data.first;
+
       if (fChannelOffsets.count(address) == 0)
       {
         continue;
@@ -128,17 +130,15 @@ bool TimeWindowCreator::exec()
 
         double time = hit.time / 1000.;
 
-        time = time - (fMaxTime - fMinTime);
-        time *= -1.;
-
         if (time < fMinTime || time > fMaxTime)
         {
           continue;
         }
 
-        auto sigCh = TimeWindowCreatorTools::generateChannelSignal(
+        auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
             time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, offset);
-        singleChannelSignals[channel.getID()].push_back(sigCh);
+
+        singleChannelSignals[channel.getID()].push_back(channelSignal);
       }
     }
 
@@ -179,13 +179,26 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
     {
       getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
       getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
+
+      if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 1);
+      }
+      else if (channelSig.getRecoFlag() == JPetRecoSignal::Corrupted)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 2);
+      }
+      else if (channelSig.getRecoFlag() == JPetRecoSignal::Unknown)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 3);
+      }
     }
   }
 }
 
 void TimeWindowCreator::initialiseHistograms()
 {
-  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 50, 0.5, 50.5), "Channels Signal in Time Slot",
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 200.5), "Channels Signal in Time Slot",
                                           "Number of Time Slots");
 
   // Channels and PMs IDs from Param Bank
@@ -210,21 +223,30 @@ void TimeWindowCreator::initialiseHistograms()
         "Number of Channel Signals");
   }
 
-  getStatistics().createHistogramWithAxes(new TH1D("good_vs_bad_sigch", "Number of good and corrupted SigChs created", 3, 0.5, 3.5), "Quality",
-                                          "Number of SigChs");
-  std::vector<std::pair<unsigned, std::string>> binLabels;
-  binLabels.push_back(std::make_pair(1, "GOOD"));
-  binLabels.push_back(std::make_pair(2, "CORRUPTED"));
-  binLabels.push_back(std::make_pair(3, "UNKNOWN"));
-  getStatistics().setHistogramBinLabel("good_vs_bad_sigch", getStatistics().AxisLabel::kXaxis, binLabels);
+  getStatistics().createHistogramWithAxes(new TH1D("reco_flags_chsig", "Number of good and corrupted Channel Sigals created", 4, 0.5, 4.5), " ",
+                                          "Number of Channel Signals");
+  vector<pair<unsigned, string>> binLabels = {make_pair(1, "GOOD"), make_pair(2, "CORRUPTED"), make_pair(3, "UNKNOWN"), make_pair(4, " ")};
+  getStatistics().setHistogramBinLabel("reco_flags_chsig", getStatistics().AxisLabel::kXaxis, binLabels);
 
-  getStatistics().createHistogramWithAxes(new TH1D("LT_time_diff", "LT time diff", 200, -250.0, 999750.0), "Time Diff [ps]", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_per_PM", "Number of LL found on PMs", 385, 0.5, 385.5), "PM ID", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_per_THR", "Number of found LL on Thresolds", 4, 0.5, 4.5), "THR Number", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_time_diff", "Time diff of LL pairs", 200, -750.0, 299250.0), "Time Diff [ps]",
+  // Flagging histograms
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LT_tdiff", "LT time diff", 400, -200000.0, 200000.0), "Time Diff [ps]",
+                                          "Number of LT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_tdiff", "Time diff of LL pairs", 200, 0.0, 5000.0), "Time Diff [ps]",
                                           "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_per_PM", "Number of TT found on PMs", 385, 0.5, 385.5), "PM ID", "Number of TT pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_per_THR", "Number of found TT on Thresolds", 4, 0.5, 4.5), "THR Number", "Number of TT pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_time_diff", "Time diff of TT pairs", 200, -750.0, 299250.0), "Time Diff [ps]",
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_tdiff", "Time diff of TT pairs", 200, 0.0, 50000.0), "Time Diff [ps]",
+                                          "Number of TT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_PM", "Number of LL found on PMs", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+                                          "PM ID", "Number of LL pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_PM", "Number of TT found on PMs", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+                                          "PM ID", "Number of TT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_THR", "Number of found LL on Thresolds", 4, 0.5, 4.5), "THR Number",
+                                          "Number of LL pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_THR", "Number of found TT on Thresolds", 4, 0.5, 4.5), "THR Number",
                                           "Number of TT pairs");
 }
