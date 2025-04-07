@@ -16,7 +16,9 @@
 #ifndef EVENTANALYZER_H
 #define EVENTANALYZER_H
 
+#include <Hits/JPetMCRecoHit/JPetMCRecoHit.h>
 #include <JPetEvent/JPetEvent.h>
+#include <JPetRawMCHit/JPetRawMCHit.h>
 #include <JPetUserTask/JPetUserTask.h>
 
 class EventAnalyzer : public JPetUserTask
@@ -29,7 +31,15 @@ public:
   virtual bool terminate() override;
 
 protected:
-  void fillResolutionHistograms(const JPetEvent& event, const JPetTimeWindowMC* tw);
+  const std::string kSave_oPsOnlyParamKey = "Save_3gamma_oPs_only_bool";
+  const std::string k3gMinRelAngleParamKey = "EventCategorizer_3gMinRelativeAngle_double";
+  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
+
+  bool fSave_oPsOnly = false;
+  bool fSaveControlHistos = true;
+  double f3gMinRelAngle = 185.0;
   bool fIsMC = false;
+
+  void fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, JPetRawMCHit mc_hit);
 };
 #endif /* !EVENTANALYZER_H */

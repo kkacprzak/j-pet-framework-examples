@@ -15,9 +15,7 @@
 
 #include "EventAnalyzer.h"
 #include "../ModularDetectorAnalysis/EventCategorizerTools.h"
-#include <Hits/JPetMCRecoHit/JPetMCRecoHit.h>
 #include <JPetOptionsTools/JPetOptionsTools.h>
-#include <JPetRawMCHit/JPetRawMCHit.h>
 
 using namespace jpet_options_tools;
 using namespace std;
@@ -30,9 +28,39 @@ bool EventAnalyzer::init()
 {
   INFO("Event analysis started.");
 
-  getStatistics().createHistogramWithAxes(new TH1D("z_res", "Resolution along Z", 301, -15.05, 15.05), "Z_{REC}-Z_{MC} [cm]");
+  // Getting bools for saving histograms
+  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
+  {
+    fSaveControlHistos = getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
+  }
 
-  getStatistics().createHistogramWithAxes(new TH1D("Edep_res", "Resolution of deposited energy", 201, -201., 201.), "E_{REC}-E_{MC} [keV]");
+  // 3 gamma selection
+  if (isOptionSet(fParams.getOptions(), k3gMinRelAngleParamKey))
+  {
+    f3gMinRelAngle = getOptionAsDouble(fParams.getOptions(), k3gMinRelAngleParamKey);
+  }
+
+  if (isOptionSet(fParams.getOptions(), kSave_oPsOnlyParamKey))
+  {
+    fSave_oPsOnly = getOptionAsBool(fParams.getOptions(), kSave_oPsOnlyParamKey);
+  }
+
+  if (fSaveControlHistos)
+  {
+    getStatistics().createHistogramWithAxes(new TH1D("z_res", "Resolution along Z", 301, -15.05, 15.05), "Z_{REC}-Z_{MC} [cm]");
+
+    getStatistics().createHistogramWithAxes(new TH1D("Edep_res", "Resolution of deposited energy", 201, -201., 201.), "E_{REC}-E_{MC} [keV]");
+
+    // Histograms for 3 gamma events
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles", "Sum vs. difference of two smallest relative angles in 3 gamma event", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(new TH2D("3g_rel_angles_sel",
+                                                     "Sum vs. difference of two smallest relative angles in 3 gamma event - after cut", 250, 0.0, 250,
+                                                     200, 0.0, 200.0),
+                                            "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+  }
 
   // Input events type
   fOutputEvents = new JPetTimeWindow("JPetEvent");
@@ -46,8 +74,8 @@ bool EventAnalyzer::exec()
   // Identify whether the input events are MC or DATA.
   // In case of MC, store the pointer to the TimeWindowMC object
   // which contains "true MC" information about the generated events.
-  JPetTimeWindowMC* time_window_mc = nullptr;
-  if (time_window_mc = dynamic_cast<JPetTimeWindowMC* const>(fEvent))
+  JPetTimeWindowMC* timeWindowMC = nullptr;
+  if (timeWindowMC = dynamic_cast<JPetTimeWindowMC* const>(fEvent))
   {
     fIsMC = true;
     INFO("The input file is MC.");
@@ -68,10 +96,37 @@ bool EventAnalyzer::exec()
       // to check if MC smearing works fine
       if (fIsMC)
       {
-        fillResolutionHistograms(event, time_window_mc);
+        bool isPure_oPs = true;
+        int hits_number = event.getHits().size();
+        for (int k = 0; k < hits_number; ++k)
+        {
+          auto reconstructed_hit = dynamic_cast<const JPetMCRecoHit*>(event.getHits().at(k));
+          if (!reconstructed_hit)
+          {
+            continue;
+          }
+          // for each reconstructed hit, we access the corresponding "true MC" hit
+          const JPetRawMCHit& mc_hit = timeWindowMC->getMCHit<JPetRawMCHit>(reconstructed_hit->getMCindex());
+
+          fillResolutionHistograms(reconstructed_hit, mc_hit);
+
+          if (fSave_oPsOnly && mc_hit.getGammaTag() != 3)
+          {
+            isPure_oPs = false;
+          }
+        }
+
+        if (fSave_oPsOnly && hits_number == 3 && isPure_oPs)
+        {
+          bool pass3angleCut = EventCategorizerTools::checkFor3Gamma(event, f3gMinRelAngle, getStatistics(), fSaveControlHistos);
+          fOutputEvents->add<JPetEvent>(event);
+        }
       }
 
-      fOutputEvents->add<JPetEvent>(event);
+      if (!fSave_oPsOnly)
+      {
+        fOutputEvents->add<JPetEvent>(event);
+      }
     }
   }
   else
@@ -88,21 +143,8 @@ bool EventAnalyzer::terminate()
   return true;
 }
 
-void EventAnalyzer::fillResolutionHistograms(const JPetEvent& event, const JPetTimeWindowMC* tw)
+void EventAnalyzer::fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, JPetRawMCHit mc_hit)
 {
-
-  int hits_number = event.getHits().size();
-  for (int k = 0; k < hits_number; ++k)
-  {
-    auto reconstructed_hit = dynamic_cast<const JPetMCRecoHit*>(event.getHits().at(k));
-    if (!reconstructed_hit)
-    {
-      continue;
-    }
-    // for each reconstructed hit, we access the corresponding "true MC" hit
-    const JPetRawMCHit& mc_hit = tw->getMCHit<JPetRawMCHit>(reconstructed_hit->getMCindex());
-
-    getStatistics().fillHistogram("z_res", reconstructed_hit->getPos().Z() - mc_hit.getPos().Z());
-    getStatistics().fillHistogram("Edep_res", reconstructed_hit->getEnergy() - mc_hit.getEnergy());
-  }
+  getStatistics().fillHistogram("z_res", reconstructed_hit->getPos().Z() - mc_hit.getPos().Z());
+  getStatistics().fillHistogram("Edep_res", reconstructed_hit->getEnergy() - mc_hit.getEnergy());
 }

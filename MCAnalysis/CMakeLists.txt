@@ -40,6 +40,7 @@ set(use_modules_from ../ModularDetectorAnalysis)
 set(HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.h
   ${use_modules_from}/EventFinder.h
+  ${use_modules_from}/EventCategorizerTools.h
   #${use_modules_from}/Downscaler.h
   ../NTupleExport/NTupler.h
 )
@@ -48,6 +49,7 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.cpp
   ${use_modules_from}/EventFinder.cpp
+  ${use_modules_from}/EventCategorizerTools.cpp
   #${use_modules_from}/Downscaler.cpp
   ../NTupleExport/NTupler.cpp
 )
