@@ -70,32 +70,22 @@ bool EventAnalyzer::init()
 
 bool EventAnalyzer::exec()
 {
-
-  // Identify whether the input events are MC or DATA.
-  // In case of MC, store the pointer to the TimeWindowMC object
-  // which contains "true MC" information about the generated events.
-  JPetTimeWindowMC* timeWindowMC = nullptr;
-  if (timeWindowMC = dynamic_cast<JPetTimeWindowMC* const>(fEvent))
-  {
-    fIsMC = true;
-    INFO("The input file is MC.");
-  }
-  else
-  {
-    INFO("The input file is DATA.");
-  }
-
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
-
     for (uint i = 0; i < timeWindow->getNumberOfEvents(); i++)
     {
       const auto& event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](i));
 
-      // if the input is MC, we fill resolution histograms
-      // to check if MC smearing works fine
-      if (fIsMC)
+      // Identify whether the input events are MC or DATA.
+      // In case of MC, store the pointer to the TimeWindowMC object
+      // which contains "true MC" information about the generated events.
+      if (event.getRecoFlag() == JPetEvent::MC)
       {
+        fIsMC = true;
+        JPetTimeWindowMC* timeWindowMC = dynamic_cast<JPetTimeWindowMC* const>(fEvent);
+
+        // if the input is MC, we fill resolution histograms
+        // to check if MC smearing works fine
         bool isPure_oPs = true;
         int hits_number = event.getHits().size();
         for (int k = 0; k < hits_number; ++k)
@@ -121,11 +111,12 @@ bool EventAnalyzer::exec()
           bool pass3angleCut = EventCategorizerTools::checkFor3Gamma(event, f3gMinRelAngle, getStatistics(), fSaveControlHistos);
           fOutputEvents->add<JPetEvent>(event);
         }
-      }
 
-      if (!fSave_oPsOnly)
-      {
-        fOutputEvents->add<JPetEvent>(event);
+        // Save all events
+        if (!fSave_oPsOnly)
+        {
+          fOutputEvents->add<JPetEvent>(event);
+        }
       }
     }
   }
