@@ -48,11 +48,13 @@ protected:
   void initialiseHistograms();
 
   const std::string kUseCorruptedHitsParamKey = "EventFinder_UseCorruptedHits_bool";
+  const std::string kIsMonteCarloParamKey = "Is_Monte_Carlo_bool";
   const std::string kEventMinMultiplicity = "EventFinder_MinEventMultiplicity_int";
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   const std::string kEventTimeParamKey = "EventFinder_EventTime_double";
   bool fUseCorruptedHits = false;
   bool fSaveControlHistos = true;
+  bool fIsMC = false;
   double fEventTimeWindow = 5000.0;
   unsigned int fMinMultiplicity = 1;
 };

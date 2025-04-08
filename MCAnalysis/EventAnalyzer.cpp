@@ -28,6 +28,10 @@ bool EventAnalyzer::init()
 {
   INFO("Event analysis started.");
 
+  // Input events type
+  // fOutputEvents = new JPetTimeWindowMC("JPetEvent", "JPetRawMCHit", "JPetMCDecayTree");
+  fOutputEvents = new JPetTimeWindow("JPetEvent");
+
   // Getting bools for saving histograms
   if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
   {
@@ -62,9 +66,6 @@ bool EventAnalyzer::init()
                                             "ang1+ang2 [deg]", "ang2-ang1 [deg]");
   }
 
-  // Input events type
-  fOutputEvents = new JPetTimeWindow("JPetEvent");
-
   return true;
 }
 
@@ -98,7 +99,10 @@ bool EventAnalyzer::exec()
           // for each reconstructed hit, we access the corresponding "true MC" hit
           const JPetRawMCHit& mc_hit = timeWindowMC->getMCHit<JPetRawMCHit>(reconstructed_hit->getMCindex());
 
-          fillResolutionHistograms(reconstructed_hit, mc_hit);
+          if (fSaveControlHistos)
+          {
+            fillResolutionHistograms(reconstructed_hit, mc_hit);
+          }
 
           if (fSave_oPsOnly && mc_hit.getGammaTag() != 3)
           {
@@ -134,7 +138,7 @@ bool EventAnalyzer::terminate()
   return true;
 }
 
-void EventAnalyzer::fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, JPetRawMCHit mc_hit)
+void EventAnalyzer::fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, const JPetRawMCHit& mc_hit)
 {
   getStatistics().fillHistogram("z_res", reconstructed_hit->getPos().Z() - mc_hit.getPos().Z());
   getStatistics().fillHistogram("Edep_res", reconstructed_hit->getEnergy() - mc_hit.getEnergy());

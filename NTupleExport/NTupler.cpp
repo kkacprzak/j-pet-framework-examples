@@ -63,7 +63,6 @@ bool NTupler::exec()
 {
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
-
     int n_events = timeWindow->getNumberOfEvents();
 
     for (int entry = 0; entry < n_events; ++entry)

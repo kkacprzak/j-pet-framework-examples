@@ -17,11 +17,14 @@
 #include "../NTupleExport/NTupler.h"
 #include "EventAnalyzer.h"
 #include <JPetManager/JPetManager.h>
+#include <TError.h>
 
 using namespace std;
 
 int main(int argc, const char* argv[])
 {
+  gErrorIgnoreLevel = kError;
+
   try
   {
     JPetManager& manager = JPetManager::getManager();

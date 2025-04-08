@@ -40,6 +40,6 @@ protected:
   double f3gMinRelAngle = 185.0;
   bool fIsMC = false;
 
-  void fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, JPetRawMCHit mc_hit);
+  void fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, const JPetRawMCHit& mc_hit);
 };
 #endif /* !EVENTANALYZER_H */

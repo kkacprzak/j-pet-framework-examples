@@ -34,7 +34,20 @@ bool EventFinder::init()
 {
   INFO("Event finding started.");
 
-  fOutputEvents = new JPetTimeWindow("JPetEvent");
+  // Getting bool for saving histograms
+  if (isOptionSet(fParams.getOptions(), kIsMonteCarloParamKey))
+  {
+    fIsMC = getOptionAsBool(fParams.getOptions(), kIsMonteCarloParamKey);
+  }
+
+  if (fIsMC)
+  {
+    fOutputEvents = new JPetTimeWindowMC("JPetEvent", "JPetRawMCHit", "JPetMCDecayTree");
+  }
+  else
+  {
+    fOutputEvents = new JPetTimeWindow("JPetEvent");
+  }
 
   // Reading values from the user options if available
   // Getting bool for using corrupted hits
@@ -96,6 +109,17 @@ bool EventFinder::exec()
   {
     return false;
   }
+
+  // Rewrite MC
+  if (fIsMC)
+  {
+    auto timeWindowMC = dynamic_cast<const JPetTimeWindowMC* const>(fEvent);
+    for (int i = 0; i < timeWindowMC->getNumberOfMCHits(); ++i)
+    {
+      auto mcHit = timeWindowMC->getMCHit<JPetRawMCHit>(i);
+      dynamic_cast<JPetTimeWindowMC*>(fOutputEvents)->addMCHit<JPetRawMCHit>(mcHit);
+    }
+  }
   return true;
 }
 
@@ -107,9 +131,20 @@ bool EventFinder::terminate()
 
 void EventFinder::saveEvents(const vector<JPetEvent>& events)
 {
-  for (const auto& event : events)
+  if (fIsMC)
   {
-    fOutputEvents->add<JPetEvent>(event);
+
+    for (const auto& event : events)
+    {
+      dynamic_cast<JPetTimeWindow*>(fOutputEvents)->add<JPetEvent>(event);
+    }
+  }
+  else
+  {
+    for (const auto& event : events)
+    {
+      fOutputEvents->add<JPetEvent>(event);
+    }
   }
 }
 
