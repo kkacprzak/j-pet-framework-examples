@@ -23,7 +23,8 @@ using namespace std;
 
 int main(int argc, const char* argv[])
 {
-  gErrorIgnoreLevel = kError;
+  // Supress unnecessary ROOT messages
+  gErrorIgnoreLevel = kFatal;
 
   try
   {

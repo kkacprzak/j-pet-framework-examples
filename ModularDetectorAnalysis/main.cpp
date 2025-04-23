@@ -31,7 +31,8 @@ int main(int argc, const char* argv[])
 {
   try
   {
-    gErrorIgnoreLevel = kError;
+    // Supress unnecessary ROOT messages
+    gErrorIgnoreLevel = kFatal;
 
     JPetManager& manager = JPetManager::getManager();
 
