@@ -49,8 +49,8 @@ protected:
   void initialiseHistograms();
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
-  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_double";
+  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kMainStripKey = "TimeWindowCreator_MainStrip_int";
   boost::property_tree::ptree fConstansTree;
   const int kNumOfThresholds = 4;

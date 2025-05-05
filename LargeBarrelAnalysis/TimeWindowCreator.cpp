@@ -128,12 +128,16 @@ bool TimeWindowCreator::exec()
         auto& channel = getParamBank().getChannel(channelNumber);
         double offset = fConstansTree.get("channel_offests." + to_string(channel.getID()), 0.0);
 
-        double time = hit.time / 1000.;
+        // double time = hit.time / 1000.;
+        double time = hit.time;
 
-        if (time < fMinTime || time > fMaxTime)
-        {
-          continue;
-        }
+        // time = time - (fMaxTime - fMinTime);
+        // time *= -1.;
+
+        // if (time < fMinTime || time > fMaxTime)
+        // {
+        //   continue;
+        // }
 
         auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
             time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, offset);
@@ -177,6 +181,8 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
     fOutputEvents->add<JPetChannelSignal>(channelSig);
     if (fSaveControlHistos)
     {
+      getStatistics().fillHistogram("chsig_time", channelSig.getTime());
+      getStatistics().fillHistogram("channel_occ", channelSig.getChannel().getID());
       getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
       getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
 
@@ -198,15 +204,22 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 
 void TimeWindowCreator::initialiseHistograms()
 {
-  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 200.5), "Channels Signal in Time Slot",
-                                          "Number of Time Slots");
-
   // Channels and PMs IDs from Param Bank
   auto minChannelID = getParamBank().getChannels().begin()->first;
   auto maxChannelID = getParamBank().getChannels().rbegin()->first;
 
   auto minPMID = getParamBank().getPMs().begin()->first;
   auto maxPMID = getParamBank().getPMs().rbegin()->first;
+
+  getStatistics().createHistogramWithAxes(
+      new TH1D("channel_occ", "Channel occupancy", maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
+      "Channels Signal in Time Slot", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Signal Channels Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Channels Signal in Time Slot", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 200.5), "Channels Signal in Time Slot",
+                                          "Number of Time Slots");
 
   // Wrong configuration
   getStatistics().createHistogramWithAxes(new TH1D("wrong_channel", "Channel IDs not found in the json configuration",

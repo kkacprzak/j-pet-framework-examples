@@ -149,8 +149,9 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
 
     if (saveHistos)
     {
-      stats.fillHistogram("lead_trail_thr1_diff",
-                          trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getTime() - leadChSigs.at(0).at(0).getTime());
+      double tDiffTOT = trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getTime() - leadChSigs.at(0).at(0).getTime();
+      stats.fillHistogram("lead_trail_thr1_diff", tDiffTOT);
+      stats.fillHistogram("lead_trail_thr1_diff_pm", pmSig.getPM().getID(), tDiffTOT);
     }
 
     // Modifying flag if needed
@@ -175,11 +176,15 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
           {
             if (saveHistos)
             {
-              stats.fillHistogram(Form("lead_trail_thr%d_diff", kk + 1), trailChSigs.at(kk).at(closestTrailingChannelSignal).getTime() -
-                                                                             leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime());
+              double tDiffTHR = leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime() - leadChSigs.at(0).at(0).getTime();
+              double tDiffTOT =
+                  trailChSigs.at(kk).at(closestTrailingChannelSignal).getTime() - leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime();
 
-              stats.fillHistogram(Form("lead_thr1_thr%d_diff", kk + 1),
-                                  leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime() - leadChSigs.at(0).at(0).getTime());
+              stats.fillHistogram(Form("lead_thr1_thr%d_diff", kk + 1), tDiffTHR);
+              stats.fillHistogram(Form("lead_trail_thr%d_diff", kk + 1), tDiffTOT);
+
+              stats.fillHistogram(Form("lead_thr1_thr%d_diff_pm", kk + 1), pmSig.getPM().getID(), tDiffTHR);
+              stats.fillHistogram(Form("lead_trail_thr%d_diff_pm", kk + 1), pmSig.getPM().getID(), tDiffTOT);
             }
 
             // Modifying flag if needed
