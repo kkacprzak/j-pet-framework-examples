@@ -1,9 +1,9 @@
 ################################################################################
 ## Data analysis project based on J-PET Framework
-## Created by J-PET Framework developers 2016-2020
+## Created by J-PET Framework developers 2016-2024
 ##
 ## Description:
-##   Data reconstruction in Modular J-PET Detector
+##   Data reconstruction of CERN data
 ################################################################################
 
 cmake_minimum_required(VERSION 3.1...3.14)
@@ -17,7 +17,7 @@ endif()
 ######################################################################
 ## Project name
 ######################################################################
-set(projectName ListmodeExport)
+set(projectName CernBeamAnalysis)
 
 ## Auxiliary files are copied to build directory after CMake
 ## You can add any files to this list
@@ -32,24 +32,43 @@ set(projectBinary ${projectName}.x)
 project(${projectName} CXX) # using only C++
 
 ## Name your header files with .h extension and source files with .cpp
-#file(GLOB HEADERS *.h)
-#file(GLOB SOURCES *.cpp)
+file(GLOB HEADERS *.h)
+file(GLOB SOURCES *.cpp)
 
 ######################################################################
 ## Using source files of modules from ModularDetectorAnalysis
+set(use_modules_from ../ModularDetectorAnalysis)
 ## Add your own HEADERS/SOURCES
 set(HEADERS
+  ${use_modules_from}/TimeWindowCreator.h
+  ../CommonTools/TimeWindowCreatorTools.h
+  ${use_modules_from}/SignalFinder.h
+  ../CommonTools/SignalFinderTools.h
+  ${use_modules_from}/SignalTransformer.h
+  ../CommonTools/SignalTransformerTools.h
+  ../CommonTools/HitFinderTools.h
+  ${use_modules_from}/EventFinder.h
+  ${use_modules_from}/EventCategorizer.h
   ../CommonTools/EventCategorizerTools.h
-  ConvertEvents.h
-  ConvertEventsTools.h
+  ../CommonTools/CalibrationTools.h
+  CERNHitFinder.h
 )
 
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+set(SOURCES
+  main.cpp
+  ${use_modules_from}/TimeWindowCreator.cpp
+  ../CommonTools/TimeWindowCreatorTools.cpp
+  ${use_modules_from}/SignalFinder.cpp
+  ../CommonTools/SignalFinderTools.cpp
+  ${use_modules_from}/SignalTransformer.cpp
+  ../CommonTools/SignalTransformerTools.cpp
+  ../CommonTools/HitFinderTools.cpp
+  ${use_modules_from}/EventFinder.cpp
+  ${use_modules_from}/EventCategorizer.cpp
   ../CommonTools/EventCategorizerTools.cpp
-  ConvertEvents.cpp
-  ConvertEventsTools.cpp
+  ../CommonTools/CalibrationTools.cpp
+  CERNHitFinder.cpp
 )
-
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})
 target_link_libraries(${projectBinary} JPetFramework::JPetFramework)
 

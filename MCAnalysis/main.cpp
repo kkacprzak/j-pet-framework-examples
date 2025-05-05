@@ -1,5 +1,5 @@
 /**
- *  @copyright Copyright 2024 The J-PET Framework Authors. All rights reserved.
+ *  @copyright Copyright 2021 The J-PET Framework Authors. All rights reserved.
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may find a copy of the License in the LICENCE file.
@@ -13,17 +13,10 @@
  *  @file main.cpp
  */
 
+#include "../ModularDetectorAnalysis/EventFinder.h"
 #include "../NTupleExport/NTupler.h"
-#include "Downscaler.h"
-#include "EventCategorizer.h"
-#include "EventFinder.h"
-#include "HitFinder.h"
-#include "SignalFinder.h"
-#include "SignalTransformer.h"
-#include "TimeWindowCreator.h"
-
+#include "EventAnalyzer.h"
 #include <JPetManager/JPetManager.h>
-#include <TError.h>
 
 using namespace std;
 
@@ -31,27 +24,15 @@ int main(int argc, const char* argv[])
 {
   try
   {
-    gErrorIgnoreLevel = kError;
-
     JPetManager& manager = JPetManager::getManager();
 
-    manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
-    manager.registerTask<SignalFinder>("SignalFinder");
-    manager.registerTask<SignalTransformer>("SignalTransformer");
-    manager.registerTask<HitFinder>("HitFinder");
     manager.registerTask<EventFinder>("EventFinder");
-    manager.registerTask<Downscaler>("Downscaler");
-    manager.registerTask<EventCategorizer>("EventCategorizer");
     manager.registerTask<NTupler>("NTupler");
+    // manager.registerTask<EventAnalyzer>("EventAnalyzer");
 
-    manager.useTask("TimeWindowCreator", "hld", "tslot");
-    manager.useTask("SignalFinder", "tslot", "pm.sig");
-    manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
-    manager.useTask("HitFinder", "mtx.sig", "hits");
     manager.useTask("EventFinder", "hits", "unk.evt");
-    manager.useTask("Downscaler", "unk.evt", "pre.evt");
-    manager.useTask("EventCategorizer", "pre.evt", "cat.evt");
-    manager.useTask("NTupler", "cat.evt", "histo.evt");
+    manager.useTask("NTupler", "unk.evt", "histo.evt");
+    // manager.useTask("EventAnalyzer", "pre.evt", "ana.evt");
 
     manager.run(argc, argv);
   }
@@ -60,5 +41,4 @@ int main(int argc, const char* argv[])
     std::cerr << "Unrecoverable error occured:" << except.what() << "Exiting the program!" << std::endl;
     return EXIT_FAILURE;
   }
-  return EXIT_SUCCESS;
 }

@@ -145,53 +145,43 @@ else()
   message(STATUS "Could not find JPetFramework, please source path/to/framework/bin/thisframework.sh to set correct paths..")
   find_package(JPetFramework CONFIG REQUIRED) #to print error message
 endif(JPetFramework_FOUND)
+
 ################################################################################
 ## Download input and configuration files
 ## The script shouldn't do anything if the data is present and correct.
-option(DOWNLOAD_DATA "Download data" ON)
-if(DOWNLOAD_DATA)
-  set(DOWNLOAD_BASE_PATH ${PROJECT_SOURCE_DIR})
 
-  file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples_reformed.sha" ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
-  file(READ ${DOWNLOAD_BASE_PATH}/examples_reformed.sha SHA_HASHES)
-  string(REGEX REPLACE "\n" ";" SHA_HASHES "${SHA_HASHES}") #create cmake array from hash + file path
-  foreach(SHA_HASH ${SHA_HASHES})
-    string(REGEX REPLACE "  " ";" SHA_HASH "${SHA_HASH}") #Split hash and file path
-    list(GET SHA_HASH 0 SHA256) #get sha hash
-    list(GET SHA_HASH 1 PATH) #get file path
-    string(REPLACE "ExamplesReformed/" "" SAVE_PATH ${PATH})
+#### TODO prepare v11 files to download
+#option(DOWNLOAD_DATA "Download data" ON)
+#if(DOWNLOAD_DATA)
+  #set(DOWNLOAD_BASE_PATH ${PROJECT_SOURCE_DIR})
 
-    if(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
-      file(SHA256 ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} CURRENT_SHA256)
-    endif(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
-    if(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
-      message(STATUS "SHA value of ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} to not match! Downloading file..")
-      file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/${PATH}" ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} EXPECTED_HASH SHA256=${SHA256})
-    endif(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
-  endforeach(SHA_HASH ${SHA_HASHES})
-  file(REMOVE ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
-endif()
+  #file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples_reformed.sha" ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
+  #file(READ ${DOWNLOAD_BASE_PATH}/examples_reformed.sha SHA_HASHES)
+  #string(REGEX REPLACE "\n" ";" SHA_HASHES "${SHA_HASHES}") #create cmake array from hash + file path
+  #foreach(SHA_HASH ${SHA_HASHES})
+  #  string(REGEX REPLACE "  " ";" SHA_HASH "${SHA_HASH}") #Split hash and file path
+  #  list(GET SHA_HASH 0 SHA256) #get sha hash
+  #  list(GET SHA_HASH 1 PATH) #get file path
+  #  string(REPLACE "ExamplesReformed/" "" SAVE_PATH ${PATH})
+
+  #  if(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
+  #    file(SHA256 ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} CURRENT_SHA256)
+  #  endif(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
+  #  if(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
+  #    message(STATUS "SHA value of ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} to not match! Downloading file..")
+  #    file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/${PATH}" ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} EXPECTED_HASH SHA256=${SHA256})
+  #  endif(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
+  #endforeach(SHA_HASH ${SHA_HASHES})
+  #file(REMOVE ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
+#endif()
 
 ################################################################################
 ## Directories with examples
 add_subdirectory(ModularDetectorAnalysis)
-add_subdirectory(MCGeantAnalysis)
 add_subdirectory(LargeBarrelAnalysis)
+add_subdirectory(MCAnalysis)
+add_subdirectory(ListmodeExport)
+add_subdirectory(NTupleExport)
+add_subdirectory(NTupleAnalysis)
 
-#add_subdirectory(ListmodeExport)
-#add_subdirectory(CernBeamAnalysis)
-#add_subdirectory(RedModuleAnalysis)
-#add_subdirectory(opsAnalysis)
-#add_subdirectory(Imaging)
-#add_subdirectory(InterfileReconstruction)
-#add_subdirectory(InterThresholdCalibration)
-#add_subdirectory(VelocityCalibration)
-#add_subdirectory(NewAnalysisTemplate)
-#add_subdirectory(ImageReconstruction)
-#add_subdirectory(ScopeLoaderExample)
-#add_subdirectory(TimeCalibration)
-#add_subdirectory(PhysicAnalysis)
-#add_subdirectory(CosmicAnalysis)
-#add_subdirectory(ScopeAnalysis)
-#add_subdirectory(TimeCalibration_iter)
 #add_subdirectory(UserDataClassExample)

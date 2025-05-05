@@ -48,7 +48,7 @@ set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.h
             ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
             ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.h
             ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/NTupler.h
+            ../NTupleExport/NTupler.h
             ../CommonTools/TimeWindowCreatorTools.h
             ../CommonTools/SignalFinderTools.h
             ../CommonTools/SignalTransformerTools.h
@@ -66,7 +66,7 @@ set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/NTupler.cpp
+            ../NTupleExport/NTupler.cpp
             ../CommonTools/TimeWindowCreatorTools.cpp
             ../CommonTools/SignalFinderTools.cpp
             ../CommonTools/SignalTransformerTools.cpp

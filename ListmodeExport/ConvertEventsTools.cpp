@@ -14,7 +14,7 @@
  */
 
 #include "ConvertEventsTools.h"
-#include "../ModularDetectorAnalysis/EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include "JPetLoggerInclude.h"
 #include <cmath>
 #include <tuple>

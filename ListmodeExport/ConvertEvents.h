@@ -16,7 +16,7 @@
 #ifndef CONVERTEVENTS_H
 #define CONVERTEVENTS_H
 
-#include "../ModularDetectorAnalysis/EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include "JPetEvent/JPetEvent.h"
 #include "JPetUserTask/JPetUserTask.h"
 #include <fstream>
