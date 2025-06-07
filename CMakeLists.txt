@@ -178,6 +178,7 @@ endif(JPetFramework_FOUND)
 ################################################################################
 ## Directories with examples
 add_subdirectory(ModularDetectorAnalysis)
+add_subdirectory(ModularDetectorAnalysisMTAB)
 add_subdirectory(LargeBarrelAnalysis)
 add_subdirectory(MCAnalysis)
 add_subdirectory(ListmodeExport)
