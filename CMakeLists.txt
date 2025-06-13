@@ -184,5 +184,12 @@ add_subdirectory(MCAnalysis)
 add_subdirectory(ListmodeExport)
 add_subdirectory(NTupleExport)
 add_subdirectory(NTupleAnalysis)
-
 #add_subdirectory(UserDataClassExample)
+
+################################################################################
+## Unit tests
+option(PACKAGE_TESTS "Build the tests" ON)
+if(PACKAGE_TESTS)
+    enable_testing()
+    add_subdirectory(CommonTools/tests)
+endif()

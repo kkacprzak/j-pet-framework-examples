@@ -34,7 +34,7 @@ SignalFinder::~SignalFinder() {}
 bool SignalFinder::init()
 {
   INFO("Signal finding started.");
-  fOutputEvents = new JPetTimeWindow("JPetPMSignal");
+  fOutputEvents = new JPetTimeWindow("JPetMatrixSignal");
 
   // Reading values from the user options if available
   // Time window parameter for leading edge
@@ -170,6 +170,7 @@ void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
     getStatistics().fillHistogram("pmsig_tslot", pmSigVec.size());
   }
 
+  // For each PM signal, creating Matrix Signal
   for (auto& pmSig : pmSigVec)
   {
     // Skip saving this signal if there is a requirement for threshld number
@@ -178,7 +179,17 @@ void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
       continue;
     }
 
-    fOutputEvents->add<JPetPMSignal>(pmSig);
+    JPetMatrixSignal mtxSig;
+    mtxSig.setMatrix(pmSig.getPM().getMatrix());
+    mtxSig.setTime(pmSig.getTime());
+    if (!mtxSig.addPMSignal(pmSig))
+    {
+      ERROR("Problem with adding the first signal to new matrix signal object.");
+      break;
+    }
+
+    fOutputEvents->add<JPetMatrixSignal>(mtxSig);
+
     if (fSaveControlHistos)
     {
       getStatistics().fillHistogram("pmsig_multi", pmSig.getLeadTrailPairs().size());

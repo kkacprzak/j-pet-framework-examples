@@ -18,6 +18,7 @@
 
 #include "../CommonTools/SignalFinderTools.h"
 #include <JPetUserTask/JPetUserTask.h>
+#include <Signals/JPetMatrixSignal/JPetMatrixSignal.h>
 #include <Signals/JPetPMSignal/JPetPMSignal.h>
 #include <boost/property_tree/ptree.hpp>
 #include <vector>

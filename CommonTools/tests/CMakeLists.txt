@@ -1,5 +1,5 @@
 message(STATUS "*****")
-message(STATUS "* Starting to configure ModularDetectorAnalysisTests...")
+message(STATUS "* Starting to configure CommonToolsTests...")
 message(STATUS "*")
 
 enable_testing()
