@@ -43,8 +43,16 @@ bool NTupler::init()
 
   if (!fOutFilePath.empty())
   {
-    size_t filename_pos = fOutFileName.find("dabc");
-    fOutFileName.replace(0, filename_pos - 1, fOutFilePath);
+    size_t filename_pos = inputFileName.find_last_of("/");
+	  if(filename_pos != std::string::npos)
+    {
+      fOutFileName.replace(0, filename_pos, fOutFilePath);
+    }
+    else
+    {
+  	  fOutFilePath.append("/");
+  	  fOutFileName = fOutFilePath.append(fOutFileName);
+    }
   }
 
   fOutFile = new TFile(fOutFileName.c_str(), "RECREATE");

@@ -39,6 +39,7 @@ project(${projectName} CXX)
 set(use_modules_from ../ModularDetectorAnalysis)
 set(HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/EventEvaluator.h
   ${use_modules_from}/EventFinder.h
   ${use_modules_from}/EventCategorizerTools.h
   #${use_modules_from}/Downscaler.h
@@ -47,6 +48,7 @@ set(HEADERS
 
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/EventEvaluator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.cpp
   ${use_modules_from}/EventFinder.cpp
   ${use_modules_from}/EventCategorizerTools.cpp

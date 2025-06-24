@@ -16,11 +16,12 @@
 #include "EventAnalyzer.h"
 #include "../ModularDetectorAnalysis/EventCategorizerTools.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
+#include <JPetCommonTools/JPetCommonTools.h>
 
 using namespace jpet_options_tools;
 using namespace std;
 
-EventAnalyzer::EventAnalyzer(const char* name) : JPetUserTask(name) {}
+EventAnalyzer::EventAnalyzer(const char *name) : JPetUserTask(name) {}
 
 EventAnalyzer::~EventAnalyzer() {}
 
@@ -28,9 +29,9 @@ bool EventAnalyzer::init()
 {
   INFO("Event analysis started.");
 
-  // Input events type
-  // fOutputEvents = new JPetTimeWindowMC("JPetEvent", "JPetRawMCHit", "JPetMCDecayTree");
-  fOutputEvents = new JPetTimeWindow("JPetEvent");
+  // Output events type
+  fOutputEvents = new JPetTimeWindowMC("JPetEvent", "JPetRawMCHit", "JPetMCDecayTree");
+  // fOutputEvents = new JPetTimeWindow("JPetEvent");
 
   // Getting bools for saving histograms
   if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
@@ -41,29 +42,67 @@ bool EventAnalyzer::init()
   // 3 gamma selection
   if (isOptionSet(fParams.getOptions(), k3gMinRelAngleParamKey))
   {
-    f3gMinRelAngle = getOptionAsDouble(fParams.getOptions(), k3gMinRelAngleParamKey);
+    f3gMinRelAngle1 = getOptionAsDouble(fParams.getOptions(), k3gMinRelAngleParamKey);
   }
 
-  if (isOptionSet(fParams.getOptions(), kSave_oPsOnlyParamKey))
+  if (isOptionSet(fParams.getOptions(), kSave_SigBkgNTUParamKey))
   {
-    fSave_oPsOnly = getOptionAsBool(fParams.getOptions(), kSave_oPsOnlyParamKey);
+    fSaveNTU = getOptionAsBool(fParams.getOptions(), kSave_SigBkgNTUParamKey);
+  }
+
+  if(fSaveNTU)
+  {
+    auto inputFileName = getOptionAsString(fParams.getOptions(), "inputFile_std::string");
+
+    // fSigOutFile = new TFile(fSigOutFileName.c_str(), "RECREATE");
+    fSigOutTree = new TTree("signal", "JPET Signal Events");
+    fSigOutTree->Branch("nhits", &fSigNumberOfHits, "nhits/I");
+    fSigOutTree->Branch("times", &fSigHitTimes);
+    fSigOutTree->Branch("pos", &fSigHitPos);
+    fSigOutTree->Branch("tots", &fSigHitTOTs);
+    fSigOutTree->Branch("scins", &fSigHitScinIDs);
+
+    // fBkgOutFile = new TFile(fBkgOutFileName.c_str(), "RECREATE");
+    fBkgOutTree = new TTree("background", "JPET Background Events");
+    fBkgOutTree->Branch("nhits", &fBkgNumberOfHits, "nhits/I");
+    fBkgOutTree->Branch("times", &fBkgHitTimes);
+    fBkgOutTree->Branch("pos", &fBkgHitPos);
+    fBkgOutTree->Branch("tots", &fBkgHitTOTs);
+    fBkgOutTree->Branch("scins", &fBkgHitScinIDs);
   }
 
   if (fSaveControlHistos)
   {
-    getStatistics().createHistogramWithAxes(new TH1D("z_res", "Resolution along Z", 301, -15.05, 15.05), "Z_{REC}-Z_{MC} [cm]");
-
-    getStatistics().createHistogramWithAxes(new TH1D("Edep_res", "Resolution of deposited energy", 201, -201., 201.), "E_{REC}-E_{MC} [keV]");
-
     // Histograms for 3 gamma events
     getStatistics().createHistogramWithAxes(
-        new TH2D("3g_rel_angles", "Sum vs. difference of two smallest relative angles in 3 gamma event", 250, 0.0, 250, 200, 0.0, 200.0),
+        new TH2D("3g_rel_angles_signal", "Sum vs. difference of two smallest relative angles in 3 gamma signal event", 250, 0.0, 250, 200, 0.0, 200.0),
         "ang1+ang2 [deg]", "ang2-ang1 [deg]");
 
-    getStatistics().createHistogramWithAxes(new TH2D("3g_rel_angles_sel",
-                                                     "Sum vs. difference of two smallest relative angles in 3 gamma event - after cut", 250, 0.0, 250,
-                                                     200, 0.0, 200.0),
-                                            "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles_background", "Sum vs. difference of two smallest relative angles in 3 gamma background event", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles_signal_cut1", "Sum vs. difference of two smallest relative angles in 3 gamma signal event - after cut", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles_background_cut1", "Sum vs. difference of two smallest relative angles in 3 gamma background event - after cut", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles_signal_cut2", "Sum vs. difference of two smallest relative angles in 3 gamma signal event - after cut", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("3g_rel_angles_background_cut2", "Sum vs. difference of two smallest relative angles in 3 gamma background event - after cut", 250, 0.0, 250, 200, 0.0, 200.0),
+        "ang1+ang2 [deg]", "ang2-ang1 [deg]");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("scatter_angle_time_signal", "Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]", "Scatter angle");
+
+    getStatistics().createHistogramWithAxes(
+        new TH2D("scatter_angle_time_background", "Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]", "Scatter angle");
   }
 
   return true;
@@ -71,56 +110,159 @@ bool EventAnalyzer::init()
 
 bool EventAnalyzer::exec()
 {
-  if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
+  if (auto timeWindow = dynamic_cast<const JPetTimeWindow *const>(fEvent))
   {
     for (uint i = 0; i < timeWindow->getNumberOfEvents(); i++)
     {
-      const auto& event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](i));
+      const auto &event = dynamic_cast<const JPetEvent &>(timeWindow->operator[](i));
 
-      // Identify whether the input events are MC or DATA.
-      // In case of MC, store the pointer to the TimeWindowMC object
-      // which contains "true MC" information about the generated events.
-      if (event.getRecoFlag() == JPetEvent::MC)
+      int hits_number = event.getHits().size();
+      if (hits_number < 3)
       {
-        fIsMC = true;
-        JPetTimeWindowMC* timeWindowMC = dynamic_cast<JPetTimeWindowMC* const>(fEvent);
+        continue;
+      }
+      if (event.getRecoFlag() != JPetEvent::MC)
+      {
+        continue;
+      }
 
-        // if the input is MC, we fill resolution histograms
-        // to check if MC smearing works fine
-        bool isPure_oPs = true;
-        int hits_number = event.getHits().size();
-        for (int k = 0; k < hits_number; ++k)
+      JPetTimeWindowMC *timeWindowMC = dynamic_cast<JPetTimeWindowMC *const>(fEvent);
+
+      // Iterating over all the combinations of 3 hits
+      for (int i = 0; i < hits_number; i++)
+      {
+        for (int j = i + 1; j < hits_number; j++)
         {
-          auto reconstructed_hit = dynamic_cast<const JPetMCRecoHit*>(event.getHits().at(k));
-          if (!reconstructed_hit)
+          for (int k = j + 1; k < hits_number; k++)
           {
-            continue;
-          }
-          // for each reconstructed hit, we access the corresponding "true MC" hit
-          const JPetRawMCHit& mc_hit = timeWindowMC->getMCHit<JPetRawMCHit>(reconstructed_hit->getMCindex());
+            auto recoHit1 = dynamic_cast<const JPetMCRecoHit *>(event.getHits().at(i));
+            auto recoHit2 = dynamic_cast<const JPetMCRecoHit *>(event.getHits().at(j));
+            auto recoHit3 = dynamic_cast<const JPetMCRecoHit *>(event.getHits().at(k));
 
-          if (fSaveControlHistos)
-          {
-            fillResolutionHistograms(reconstructed_hit, mc_hit);
-          }
+            auto mc_hit1 = timeWindowMC->getMCHit<JPetRawMCHit>(recoHit1->getMCindex());
+            auto mc_hit2 = timeWindowMC->getMCHit<JPetRawMCHit>(recoHit2->getMCindex());
+            auto mc_hit3 = timeWindowMC->getMCHit<JPetRawMCHit>(recoHit3->getMCindex());
 
-          if (fSave_oPsOnly && mc_hit.getGammaTag() != 3)
-          {
-            isPure_oPs = false;
+            auto relAngesVec = getRelAngles(recoHit1->getPos(), recoHit2->getPos(), recoHit3->getPos());
+
+            bool isSignal = false;
+            // Signal events when all 3 are coming from oPs decay
+            if (mc_hit1.getGammaTag() == 3 && mc_hit2.getGammaTag() == 3 && mc_hit3.getGammaTag() == 3)
+            {
+              isSignal = true;
+              if(fSaveNTU)
+              { 
+                fSigNumberOfHits = 3;
+                
+                // Writing time in nanoseconds
+                fSigHitTimes.push_back(recoHit1->getTime() / 1000.);
+                fSigHitTimes.push_back(recoHit2->getTime() / 1000.);
+                fSigHitTimes.push_back(recoHit3->getTime() / 1000.);
+                
+                fSigHitPos.push_back(recoHit1->getPos());
+                fSigHitPos.push_back(recoHit2->getPos());
+                fSigHitPos.push_back(recoHit3->getPos());
+
+                fSigHitTOTs.push_back(recoHit1->getEnergy());
+                fSigHitTOTs.push_back(recoHit2->getEnergy());
+                fSigHitTOTs.push_back(recoHit3->getEnergy());
+
+                fSigHitScinIDs.push_back(recoHit1->getScin().getID());
+                fSigHitScinIDs.push_back(recoHit2->getScin().getID());
+                fSigHitScinIDs.push_back(recoHit3->getScin().getID());
+
+                fSigOutTree->Fill();
+                resetRowSig();
+              }
+
+
+              if (fSaveControlHistos)
+              {
+                getStatistics().fillHistogram("3g_rel_angles_signal", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                getStatistics().fillHistogram("scatter_angle_time_signal",
+                                              recoHit2->getTime() - recoHit1->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit1, recoHit2),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit1, recoHit2));
+
+                getStatistics().fillHistogram("scatter_angle_time_signal",
+                                              recoHit3->getTime() - recoHit1->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit1, recoHit3),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit1, recoHit3));
+
+                getStatistics().fillHistogram("scatter_angle_time_signal",
+                                              recoHit3->getTime() - recoHit2->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit2, recoHit3),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit2, recoHit3));
+
+                if (relAngesVec.at(1) + relAngesVec.at(0) > f3gMinRelAngle1)
+                {
+                  getStatistics().fillHistogram("3g_rel_angles_signal_cut1", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                }
+                if (relAngesVec.at(1) + relAngesVec.at(0) > f3gMinRelAngle2)
+                {
+                  getStatistics().fillHistogram("3g_rel_angles_signal_cut2", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                }
+              }
+            }
+            else
+            {
+              if(fSaveNTU)
+              { 
+                fBkgNumberOfHits = 3;
+                
+                // Writing time in nanoseconds
+                fBkgHitTimes.push_back(recoHit1->getTime() / 1000.);
+                fBkgHitTimes.push_back(recoHit2->getTime() / 1000.);
+                fBkgHitTimes.push_back(recoHit3->getTime() / 1000.);
+                
+                fBkgHitPos.push_back(recoHit1->getPos());
+                fBkgHitPos.push_back(recoHit2->getPos());
+                fBkgHitPos.push_back(recoHit3->getPos());
+
+                fBkgHitTOTs.push_back(recoHit1->getEnergy());
+                fBkgHitTOTs.push_back(recoHit2->getEnergy());
+                fBkgHitTOTs.push_back(recoHit3->getEnergy());
+
+                fBkgHitScinIDs.push_back(recoHit1->getScin().getID());
+                fBkgHitScinIDs.push_back(recoHit2->getScin().getID());
+                fBkgHitScinIDs.push_back(recoHit3->getScin().getID());
+
+                fBkgOutTree->Fill();
+                resetRowBkg();
+              }
+              if (fSaveControlHistos)
+              {
+                getStatistics().fillHistogram("3g_rel_angles_background", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                getStatistics().fillHistogram("scatter_angle_time_background",
+                                              recoHit2->getTime() - recoHit1->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit1, recoHit2),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit1, recoHit2));
+
+                getStatistics().fillHistogram("scatter_angle_time_background",
+                                              recoHit3->getTime() - recoHit1->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit1, recoHit3),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit1, recoHit3));
+
+                getStatistics().fillHistogram("scatter_angle_time_background",
+                                              recoHit3->getTime() - recoHit2->getTime() - EventCategorizerTools::calculateScatteringTime(recoHit2, recoHit3),
+                                              EventCategorizerTools::calculateScatteringAngle(recoHit2, recoHit3));
+
+                if (relAngesVec.at(1) + relAngesVec.at(0) > f3gMinRelAngle1)
+                {
+                  getStatistics().fillHistogram("3g_rel_angles_background_cut1", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                }
+                if (relAngesVec.at(1) + relAngesVec.at(0) > f3gMinRelAngle2)
+                {
+                  getStatistics().fillHistogram("3g_rel_angles_background_cut2", relAngesVec.at(1) + relAngesVec.at(0), relAngesVec.at(1) - relAngesVec.at(0));
+                }
+              }
+            }
           }
         }
-
-        if (fSave_oPsOnly && hits_number == 3 && isPure_oPs)
-        {
-          bool pass3angleCut = EventCategorizerTools::checkFor3Gamma(event, f3gMinRelAngle, getStatistics(), fSaveControlHistos);
-          fOutputEvents->add<JPetEvent>(event);
-        }
-
-        // Save all events
-        if (!fSave_oPsOnly)
-        {
-          fOutputEvents->add<JPetEvent>(event);
-        }
+      }
+    
+      // Saving the event without modifications
+      dynamic_cast<JPetTimeWindow*>(fOutputEvents)->add<JPetEvent>(event);
+      // Rewriting MC
+      for (int i = 0; i < timeWindowMC->getNumberOfMCHits(); ++i)
+      {
+        auto mcHit = timeWindowMC->getMCHit<JPetRawMCHit>(i);
+        dynamic_cast<JPetTimeWindowMC*>(fOutputEvents)->addMCHit<JPetRawMCHit>(mcHit);
       }
     }
   }
@@ -135,11 +277,38 @@ bool EventAnalyzer::exec()
 bool EventAnalyzer::terminate()
 {
   INFO("Event analysis completed.");
+
+  fSigOutTree->Write();
+  fBkgOutTree->Write();
+
   return true;
 }
 
-void EventAnalyzer::fillResolutionHistograms(const JPetMCRecoHit* reconstructed_hit, const JPetRawMCHit& mc_hit)
+vector<double> EventAnalyzer::getRelAngles(TVector3 pos1, TVector3 pos2, TVector3 pos3)
 {
-  getStatistics().fillHistogram("z_res", reconstructed_hit->getPos().Z() - mc_hit.getPos().Z());
-  getStatistics().fillHistogram("Edep_res", reconstructed_hit->getEnergy() - mc_hit.getEnergy());
+  vector<double> relativeAngles;
+  relativeAngles.push_back(TMath::RadToDeg() * pos1.Angle(pos2));
+  relativeAngles.push_back(TMath::RadToDeg() * pos2.Angle(pos3));
+  relativeAngles.push_back(TMath::RadToDeg() * pos3.Angle(pos1));
+  sort(relativeAngles.begin(), relativeAngles.end());
+
+  return relativeAngles;
+}
+
+void EventAnalyzer::resetRowSig()
+{
+  fSigNumberOfHits = 0;
+  fSigHitTimes.clear();
+  fSigHitPos.clear();
+  fSigHitTOTs.clear();
+  fSigHitScinIDs.clear();
+}
+
+void EventAnalyzer::resetRowBkg()
+{
+  fBkgNumberOfHits = 0;
+  fBkgHitTimes.clear();
+  fBkgHitPos.clear();
+  fBkgHitTOTs.clear();
+  fBkgHitScinIDs.clear();
 }

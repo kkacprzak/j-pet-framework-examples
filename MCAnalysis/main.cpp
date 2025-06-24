@@ -14,8 +14,8 @@
  */
 
 #include "../ModularDetectorAnalysis/EventFinder.h"
-#include "../NTupleExport/NTupler.h"
 #include "EventAnalyzer.h"
+#include "EventEvaluator.h"
 #include <JPetManager/JPetManager.h>
 #include <TError.h>
 
@@ -32,11 +32,11 @@ int main(int argc, const char* argv[])
 
     manager.registerTask<EventFinder>("EventFinder");
     manager.registerTask<EventAnalyzer>("EventAnalyzer");
-    manager.registerTask<NTupler>("NTupler");
+    // manager.registerTask<EventEvaluator>("EventEvaluator");
 
     manager.useTask("EventFinder", "hits", "unk.evt");
     manager.useTask("EventAnalyzer", "unk.evt", "ana.evt");
-    manager.useTask("NTupler", "ana.evt", "histo.evt");
+    // manager.useTask("EventEvaluator", "ana.evt", "eva.evt");
 
     manager.run(argc, argv);
   }

@@ -1,5 +1,5 @@
 /**
- *  @copyright Copyright 2021 The J-PET Framework Authors. All rights reserved.
+ *  @copyright Copyright 2025 The J-PET Framework Authors. All rights reserved.
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may find a copy of the License in the LICENCE file.
@@ -10,56 +10,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *  @file EventAnalyzer.h
+ *  @file EventEvaluator.h
  */
 
-#ifndef EVENTANALYZER_H
-#define EVENTANALYZER_H
+#ifndef EVENTEVALUATOR_H
+#define EVENTEVALUATOR_H
 
 #include <Hits/JPetMCRecoHit/JPetMCRecoHit.h>
 #include <JPetEvent/JPetEvent.h>
 #include <JPetRawMCHit/JPetRawMCHit.h>
 #include <JPetUserTask/JPetUserTask.h>
+#include <TMVA/Reader.h>
 
-class EventAnalyzer : public JPetUserTask
+class EventEvaluator : public JPetUserTask
 {
 public:
-  EventAnalyzer(const char* name);
-  virtual ~EventAnalyzer();
+  EventEvaluator(const char* name);
+  virtual ~EventEvaluator();
   virtual bool init() override;
   virtual bool exec() override;
   virtual bool terminate() override;
 
 protected:
-  const std::string kSave_SigBkgNTUParamKey = "Save_SigBkgNTU_bool";
   const std::string k3gMinRelAngleParamKey = "EventCategorizer_3gMinRelativeAngle_double";
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
+  const std::string kPathToDatasetParamKey = "Path_To_Dataset_std:string";
 
-  bool fSaveNTU = false;
   bool fSaveControlHistos = true;
+  double f3gMinRelAngle = 185.0;
+  std::string fPathToDataset = "./";
 
-  double f3gMinRelAngle1 = 165.0;
-  double f3gMinRelAngle2 = 190.0;
+  std::vector<float> getRelAngles(TVector3 pos1, TVector3 pos2, TVector3 pos3);
+  float getScatterTestMeasure(const JPetBaseHit* hit1, const JPetBaseHit* hit2);
 
-  std::vector<double> getRelAngles(TVector3 pos1, TVector3 pos2, TVector3 pos3);
+  TMVA::Reader* fReader;
 
-  void resetRowSig();
-  void resetRowBkg();
+  float fRelAng1, fRelAng2, fRelAng3;
+  float fTime21, fTime32, fTime31;
+  float fTOT1, fTOT2, fTOT3;
 
-  TTree* fSigOutTree;
-  TTree* fBkgOutTree;
-
-  // ntuple components
-  std::vector<double> fSigHitTimes;
-  std::vector<TVector3> fSigHitPos;
-  std::vector<double> fSigHitTOTs;
-  std::vector<UInt_t> fSigHitScinIDs;
-  UInt_t fSigNumberOfHits;
-
-  std::vector<double> fBkgHitTimes;
-  std::vector<TVector3> fBkgHitPos;
-  std::vector<double> fBkgHitTOTs;
-  std::vector<UInt_t> fBkgHitScinIDs;
-  UInt_t fBkgNumberOfHits;
+  std::map<std::string, float> fMethods;
 };
-#endif /* !EVENTANALYZER_H */
+#endif /* !EVENTEVALUATOR_H */
