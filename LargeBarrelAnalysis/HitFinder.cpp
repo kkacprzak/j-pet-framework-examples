@@ -16,7 +16,7 @@
 using namespace std;
 
 #include <JPetAnalysisTools/JPetAnalysisTools.h>
-#include <JPetGeomMapping/JPetGeomMapping.h>
+// #include <JPetGeomMapping/JPetGeomMapping.h>
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetWriter/JPetWriter.h>
 
@@ -25,6 +25,7 @@ using namespace std;
 #include "ToTEnergyConverterFactory.h"
 #include "UniversalFileLoader.h"
 
+#include <JPetPhysRecoHit/JPetPhysRecoHit.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -64,16 +65,23 @@ bool HitFinder::init()
   {
     fABTimeDiff = getOptionAsFloat(fParams.getOptions(), kABTimeDiffParamKey);
   }
+
+  if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
+  {
+    boost::property_tree::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
+  }
+
   // Getting velocities file from user options
-  auto velocitiesFile = std::string("dummyCalibration.txt");
-  if (isOptionSet(fParams.getOptions(), kVelocityFileParamKey))
-  {
-    velocitiesFile = getOptionAsString(fParams.getOptions(), kVelocityFileParamKey);
-  }
-  else
-  {
-    WARNING("No path to the file with velocities was provided in user options.");
-  }
+  // auto velocitiesFile = std::string("dummyCalibration.txt");
+  // if (isOptionSet(fParams.getOptions(), kVelocityFileParamKey))
+  // {
+  //   velocitiesFile = getOptionAsString(fParams.getOptions(), kVelocityFileParamKey);
+  // }
+  // else
+  // {
+  //   WARNING("No path to the file with velocities was provided in user options.");
+  // }
+
   // Getting number of Reference Detector Scintillator ID
   if (isOptionSet(fParams.getOptions(), kRefDetScinIDParamKey))
   {
@@ -84,6 +92,7 @@ bool HitFinder::init()
     WARNING(
         Form("No value of the %s parameter provided by the user, indicating that Reference Detector was not used.", kRefDetScinIDParamKey.c_str()));
   }
+  
   // Getting bool for saving histograms
   if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
   {
@@ -91,13 +100,13 @@ bool HitFinder::init()
   }
 
   // Use of velocities file
-  JPetGeomMapping mapper(getParamBank());
-  auto tombMap = mapper.getTOMBMapping();
-  fVelocities = UniversalFileLoader::loadConfigurationParameters(velocitiesFile, tombMap);
-  if (fVelocities.empty())
-  {
-    ERROR("Velocities map seems to be empty");
-  }
+  // JPetGeomMapping mapper(getParamBank());
+  // auto tombMap = mapper.getTOMBMapping();
+  // fVelocities = UniversalFileLoader::loadConfigurationParameters(velocitiesFile, tombMap);
+  // if (fVelocities.empty())
+  // {
+  //   ERROR("Velocities map seems to be empty");
+  // }
 
   // Loading parameters for conversion to ToT to energy
   if (isOptionSet(fParams.getOptions(), kConvertToTParamKey))

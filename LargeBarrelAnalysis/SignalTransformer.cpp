@@ -26,7 +26,7 @@ SignalTransformer::~SignalTransformer() {}
 
 bool SignalTransformer::init()
 {
-  INFO("Signal transforming started: Raw to Reco and Phys");
+  INFO("Signal transforming started: PM to Matrix");
   fOutputEvents = new JPetTimeWindow("JPetMatrixSignal");
 
   // Getting bool for using bad signals

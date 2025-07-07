@@ -28,13 +28,13 @@ int main(int argc, const char* argv[])
     JPetManager& manager = JPetManager::getManager();
 
     manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
-    // manager.registerTask<SignalFinder>("SignalFinder");
-    // manager.registerTask<SignalTransformer>("SignalTransformer");
+    manager.registerTask<SignalFinder>("SignalFinder");
+    manager.registerTask<SignalTransformer>("SignalTransformer");
     // manager.registerTask<HitFinder>("HitFinder");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot");
-    // manager.useTask("SignalFinder", "tslot", "pm.sig");
-    // manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
+    manager.useTask("SignalFinder", "tslot", "pm.sig");
+    manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
     // manager.useTask("HitFinder", "mtx.sig", "hits");
 
     manager.run(argc, argv);

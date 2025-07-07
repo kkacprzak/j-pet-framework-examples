@@ -126,7 +126,7 @@ bool TimeWindowCreator::exec()
         }
 
         auto& channel = getParamBank().getChannel(channelNumber);
-        double offset = fConstansTree.get("channel_offests." + to_string(channel.getID()), 0.0);
+        double synchroOffset = fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
 
         // double time = hit.time / 1000.;
         double time = hit.time;
@@ -134,13 +134,13 @@ bool TimeWindowCreator::exec()
         // time = time - (fMaxTime - fMinTime);
         // time *= -1.;
 
-        // if (time < fMinTime || time > fMaxTime)
-        // {
-        //   continue;
-        // }
+        if (time < fMinTime || time > fMaxTime)
+        {
+          continue;
+        }
 
         auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
-            time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, offset);
+            time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, synchroOffset);
 
         singleChannelSignals[channel.getID()].push_back(channelSignal);
       }
@@ -183,9 +183,13 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
     {
       getStatistics().fillHistogram("chsig_time", channelSig.getTime());
       getStatistics().fillHistogram("channel_occ", channelSig.getChannel().getID());
-      getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
-      getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
 
+      if(channelSig.getEdgeType()==JPetChannelSignal::Leading)
+      {
+        getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
+        getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
+      }
+      
       if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
       {
         getStatistics().fillHistogram("reco_flags_chsig", 1);
