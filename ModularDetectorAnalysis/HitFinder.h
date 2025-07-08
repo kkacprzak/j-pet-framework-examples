@@ -16,6 +16,7 @@
 #ifndef HITFINDER1_H
 #define HITFINDER1_H
 
+#include "../CommonTools/ToTEnergyConverterFactory.h"
 #include <Hits/JPetPhysRecoHit/JPetPhysRecoHit.h>
 #include <JPetUserTask/JPetUserTask.h>
 #include <Signals/JPetMatrixSignal/JPetMatrixSignal.h>
@@ -51,11 +52,14 @@ protected:
   const std::string kSaveCalibHistosParamKey = "Save_Calib_Histograms_bool";
   const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
   const std::string kABTimeDiffParamKey = "HitFinder_ABTimeDiff_double";
+  const std::string kConvertToTParamKey = "HitFinder_ConvertToT_bool";
+  ToTEnergyConverterFactory fToTConverterFactory;
   boost::property_tree::ptree fConstansTree;
   double fToTHistoUpperLimit = 200000.0;
   bool fSaveControlHistos = true;
   bool fSaveCalibHistos = false;
   double fABTimeDiff = 10000.0;
+  bool fConvertToT = false;
   int fMinHitMultiplicity = -1;
 };
 

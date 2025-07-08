@@ -39,32 +39,32 @@ set(HEADERS
             ../CommonTools/SignalFinderTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
             ../CommonTools/SignalTransformerTools.h
-
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
-            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h
+            ../ModularDetectorAnalysis/HitFinder.h
+            ../ModularDetectorAnalysis/EventFinder.h
+            ../ModularDetectorAnalysis/EventCategorizer.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/HitFinderTools.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/CalibrationTools.h
+            ../CommonTools/ToTEnergyConverter.h
+            ../CommonTools/ToTEnergyConverterFactory.h
             )
 
-set(SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.cpp
             ../CommonTools/TimeWindowCreatorTools.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
             ../CommonTools/SignalFinderTools.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
             ../CommonTools/SignalTransformerTools.cpp
-
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
-            #${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
+            ../ModularDetectorAnalysis/HitFinder.cpp
+            ../CommonTools/HitFinderTools.cpp
+            ../ModularDetectorAnalysis/EventFinder.cpp
+            ../ModularDetectorAnalysis/EventCategorizer.cpp
+            ../CommonTools/EventCategorizerTools.cpp
+            ../CommonTools/CalibrationTools.cpp
+            ../CommonTools/ToTEnergyConverter.cpp
+            ../CommonTools/ToTEnergyConverterFactory.cpp
             )
 
 

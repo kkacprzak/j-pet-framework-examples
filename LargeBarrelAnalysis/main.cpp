@@ -13,11 +13,13 @@
  *  @file main.cpp
  */
 
+#include "../ModularDetectorAnalysis/EventCategorizer.h"
+#include "../ModularDetectorAnalysis/EventFinder.h"
+#include "../ModularDetectorAnalysis/HitFinder.h"
 #include "SignalFinder.h"
 #include "SignalTransformer.h"
 #include "TimeWindowCreator.h"
 #include <JPetManager/JPetManager.h>
-// #include "HitFinder.h"
 
 using namespace std;
 
@@ -30,12 +32,16 @@ int main(int argc, const char* argv[])
     manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
     manager.registerTask<SignalFinder>("SignalFinder");
     manager.registerTask<SignalTransformer>("SignalTransformer");
-    // manager.registerTask<HitFinder>("HitFinder");
+    manager.registerTask<HitFinder>("HitFinder");
+    manager.registerTask<EventFinder>("EventFinder");
+    manager.registerTask<EventCategorizer>("EventCategorizer");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot");
     manager.useTask("SignalFinder", "tslot", "pm.sig");
     manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
-    // manager.useTask("HitFinder", "mtx.sig", "hits");
+    manager.useTask("HitFinder", "mtx.sig", "hits");
+    manager.useTask("EventFinder", "hits", "unk.evt");
+    manager.useTask("EventCategorizer", "unk.evt", "cat.evt");
 
     manager.run(argc, argv);
   }

@@ -55,10 +55,12 @@ set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.h
             ../CommonTools/HitFinderTools.h
             ../CommonTools/EventCategorizerTools.h
             ../CommonTools/CalibrationTools.h
+            ../CommonTools/ToTEnergyConverter.h
+            ../CommonTools/ToTEnergyConverterFactory.h
             )
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-            TimeWindowCreator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
@@ -73,6 +75,8 @@ set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
             ../CommonTools/HitFinderTools.cpp
             ../CommonTools/EventCategorizerTools.cpp
             ../CommonTools/CalibrationTools.cpp
+            ../CommonTools/ToTEnergyConverter.cpp
+            ../CommonTools/ToTEnergyConverterFactory.cpp
             )
 
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})

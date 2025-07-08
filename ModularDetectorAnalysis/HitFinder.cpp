@@ -15,6 +15,7 @@
 
 #include "HitFinder.h"
 #include "../CommonTools/HitFinderTools.h"
+#include "../CommonTools/ToTEnergyConverter.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetWriter/JPetWriter.h>
 #include <boost/property_tree/json_parser.hpp>
@@ -66,6 +67,21 @@ bool HitFinder::init()
     WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kABTimeDiffParamKey.c_str(), fABTimeDiff));
   }
 
+  // Loading parameters for conversion to ToT to energy
+  if (isOptionSet(fParams.getOptions(), kConvertToTParamKey))
+  {
+    fConvertToT = getOptionAsBool(fParams.getOptions(), kConvertToTParamKey);
+    if (fConvertToT)
+    {
+      INFO("Hit finder performs conversion of ToT to deposited energy with provided params.");
+      fToTConverterFactory.loadConverterOptions(fParams.getOptions());
+    }
+    else
+    {
+      INFO("Hit finder will not convert ToT to deposited energy since no user parameters are provided.");
+    }
+  }
+
   // For plotting ToT histograms
   if (isOptionSet(fParams.getOptions(), kToTHistoUpperLimitParamKey))
   {
@@ -85,8 +101,28 @@ bool HitFinder::exec()
 {
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
+    // Divding signals by scintillators
     auto signalsBySlot = HitFinderTools::getSignalsByScin(timeWindow);
+    // Building hits by matching signals
     auto allHits = HitFinderTools::matchAllSignals(signalsBySlot, fABTimeDiff, fConstansTree, getStatistics(), fSaveControlHistos);
+    // If requested, adding energy to hits based on TOT conversion
+    if (fConvertToT)
+    {
+      for (auto hit : allHits)
+      {
+        auto tot = hit.getToT();
+        auto totConverter = fToTConverterFactory.getEnergyConverter();
+        if (tot > totConverter.getRange().first && tot < totConverter.getRange().second)
+        {
+          auto energy = totConverter(tot);
+          if (!std::isnan(energy))
+          {
+            hit.setEnergy(energy);
+          }
+        }
+      }
+    }
+
     if (allHits.size() > 0)
     {
       saveHits(allHits);
@@ -140,6 +176,13 @@ void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
         getStatistics().fillHistogram("hit_tot_scin", scinID, hit.getToT());
         getStatistics().fillHistogram("hit_tot_scin_z_pos", scinID, hit.getToT(), hit.getPosZ());
       }
+
+      if (fConvertToT && hit.getEnergy() != 0.0)
+      {
+        getStatistics().fillHistogram("conv_tot_range", hit.getToT());
+        getStatistics().fillHistogram("conv_dep_energy", hit.getEnergy());
+        getStatistics().fillHistogram("conv_dep_energy_vs_tot", hit.getEnergy(), hit.getToT());
+      }
     }
   }
 }
@@ -192,4 +235,26 @@ void HitFinder::initialiseHistograms()
   getStatistics().createHistogramWithAxes(
       new TH1D("remain_signals_tdiff", "Time Diff of an unused signal and the consecutive one", 200, fABTimeDiff, 5.0 * fABTimeDiff),
       "Time difference [ps]", "Number of Signals");
+
+  // ToT/Edep conversion histograms
+  if (fConvertToT)
+  {
+    auto converterRange = fToTConverterFactory.getEnergyConverter().getRange();
+    auto totConverter = fToTConverterFactory.getEnergyConverter();
+
+    auto minToT = converterRange.first;
+    auto maxToT = converterRange.second;
+    auto minEDep = totConverter(converterRange.first);
+    auto maxEDep = totConverter(converterRange.second);
+
+    getStatistics().createHistogramWithAxes(new TH1D("conv_tot_range", "TOT of hits in range of conversion function", 200, minToT, maxToT),
+                                            "Time over Threshold [ps]", "Number of Hits");
+    getStatistics().createHistogramWithAxes(
+        new TH1D("conv_dep_energy", "Deposited energy of hits, converted from ToT with provied formula", 200, minEDep, maxEDep),
+        "Deposited energy [keV]", "Number of Hits");
+    getStatistics().createHistogramWithAxes(new TH2D("conv_dep_energy_vs_tot",
+                                                     "Deposited energy of hits, converted from ToT with provied formula vs. input ToT", 200, minEDep,
+                                                     maxEDep, 200, minToT, maxToT),
+                                            "Deposited energy [keV]", "ToT of Hit [ps]");
+  }
 }

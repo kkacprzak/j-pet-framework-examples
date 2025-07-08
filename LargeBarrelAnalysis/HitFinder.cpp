@@ -92,7 +92,7 @@ bool HitFinder::init()
     WARNING(
         Form("No value of the %s parameter provided by the user, indicating that Reference Detector was not used.", kRefDetScinIDParamKey.c_str()));
   }
-  
+
   // Getting bool for saving histograms
   if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
   {
