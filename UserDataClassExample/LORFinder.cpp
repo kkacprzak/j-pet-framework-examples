@@ -14,7 +14,7 @@
  */
 
 #include "LORFinder.h"
-#include "../LargeBarrelAnalysis/EventCategorizerTools.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include "JPetLORevent.h"
 #include <iostream>
 #include <string>
@@ -23,9 +23,10 @@ using namespace jpet_options_tools;
 
 using namespace std;
 
-LORFinder::LORFinder(const char *name) : JPetUserTask(name) {}
+LORFinder::LORFinder(const char* name) : JPetUserTask(name) {}
 
-bool LORFinder::init() {
+bool LORFinder::init()
+{
   INFO("Creation of LOR events started");
 
   // Set this to the name of your custom data class
@@ -35,36 +36,41 @@ bool LORFinder::init() {
   return true;
 }
 
-bool LORFinder::exec() {
-  if (auto timeWindow = dynamic_cast<const JPetTimeWindow *const>(fEvent)) {
+bool LORFinder::exec()
+{
+  if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
+  {
 
-    for (uint i = 0; i < timeWindow->getNumberOfEvents(); i++) {
-      const auto &event =
-          dynamic_cast<const JPetEvent &>(timeWindow->operator[](i));
+    for (uint i = 0; i < timeWindow->getNumberOfEvents(); i++)
+    {
+      const auto& event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](i));
 
-      if (event.getHits().size() == 2 &&
-          EventCategorizerTools::checkFor2Gamma(event, getStatistics(), false,
-                                                fB2BSlotThetaDiff, fMaxTimeDiff)) {
+      TVector3 sourcePos = {0., 0., 0.};
+      bool is2Gamma =
+          EventCategorizerTools::checkFor2Gamma(event, getStatistics(), false, fB2BSlotThetaDiff, fMaxTimeDiff, fTOTCutAnniMin, fTOTCutAnniMax,
+                                                sourcePos, EventCategorizerTools::kMinMaxParams, -1000.0, -6000.0, -1000.0, 160.0, 180.0);
 
+      if (event.getHits().size() == 2 && is2Gamma)
+      {
         // if the event looks like a 2-gamma one,
         // reconstruct the annihilation point on the LOR
-        TVector3 annihilation_point =
-            EventCategorizerTools::calculateAnnihilationPoint(
-                event.getHits().at(0), event.getHits().at(1));
+        TVector3 annihilation_point = EventCategorizerTools::calculateAnnihilationPoint(event.getHits().at(0), event.getHits().at(1));
         // and store it as a JPetLORevent
         JPetLORevent lor_event = event;
         lor_event.setAnnihilationPoint(annihilation_point);
         fOutputEvents->add<JPetLORevent>(lor_event);
       }
     }
-
-  } else {
+  }
+  else
+  {
     return false;
   }
   return true;
 }
 
-bool LORFinder::terminate() {
+bool LORFinder::terminate()
+{
   INFO("Creation of LOR events finished.");
   return true;
 }

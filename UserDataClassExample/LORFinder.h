@@ -16,18 +16,19 @@
 #ifndef LORFINDER_H
 #define LORFINDER_H
 
+#include <Hits/JPetPhysRecoHit/JPetPhysRecoHit.h>
 #include <JPetEvent/JPetEvent.h>
-#include <JPetHit/JPetHit.h>
 #include <JPetUserTask/JPetUserTask.h>
 #include <map>
 #include <vector>
 
 class JPetWriter;
 
-class LORFinder : public JPetUserTask {
+class LORFinder : public JPetUserTask
+{
 
 public:
-  LORFinder(const char *name);
+  LORFinder(const char* name);
   virtual ~LORFinder() {}
   virtual bool init() override;
   virtual bool exec() override;
@@ -36,5 +37,7 @@ public:
 protected:
   double fB2BSlotThetaDiff = 15.0;
   double fMaxTimeDiff = 1000.;
+  double fTOTCutAnniMin = 7500000.;
+  double fTOTCutAnniMax = 9000000.;
 };
 #endif /*  !LORFINDER_H */

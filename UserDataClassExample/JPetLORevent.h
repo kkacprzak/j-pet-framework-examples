@@ -17,6 +17,7 @@
 #ifndef JPETLOREVENT_H
 #define JPETLOREVENT_H
 
+#include <Hits/JPetPhysRecoHit/JPetPhysRecoHit.h>
 #include <JPetEvent/JPetEvent.h>
 #include <TVector3.h>
 
@@ -27,21 +28,21 @@
  *
  */
 
-class JPetLORevent : public JPetEvent {
+class JPetLORevent : public JPetEvent
+{
 
 public:
   JPetLORevent();
-  JPetLORevent(const JPetEvent &event);
-  JPetLORevent(const std::vector<JPetHit> &hits, const TVector3 &anh_point,
-               JPetEventType eventType = JPetEventType::kUnknown,
+  JPetLORevent(const JPetEvent& event);
+  JPetLORevent(const std::vector<const JPetBaseHit*>& hits, const TVector3& anh_point, JPetEventType eventType = JPetEventType::kUnknown,
                bool orderedByTime = true);
 
-  void Clear(Option_t *opt = "");
+  void Clear(Option_t* opt = "");
 
   void setAnnihilationPoint(double x, double y, double z);
-  void setAnnihilationPoint(const TVector3 &point);
+  void setAnnihilationPoint(const TVector3& point);
 
-  const TVector3 &getAnnihilationPoint() const;
+  const TVector3& getAnnihilationPoint() const;
 
 protected:
   TVector3 fAnnihilationPoint;

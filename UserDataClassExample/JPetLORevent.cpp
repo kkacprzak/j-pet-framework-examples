@@ -19,28 +19,22 @@ ClassImp(JPetLORevent);
 
 JPetLORevent::JPetLORevent() : JPetEvent() { /**/ }
 
-JPetLORevent::JPetLORevent(const JPetEvent &event) : JPetEvent(event) { /**/ }
+JPetLORevent::JPetLORevent(const JPetEvent& event) : JPetEvent(event) { /**/ }
 
-JPetLORevent::JPetLORevent(const std::vector<JPetHit> &hits,
-                           const TVector3 &anh_point, JPetEventType eventType,
-                           bool orderedByTime)
-    : JPetEvent(hits, eventType, orderedByTime), fAnnihilationPoint(anh_point) {
+JPetLORevent::JPetLORevent(const std::vector<const JPetBaseHit*>& hits, const TVector3& anh_point, JPetEventType eventType, bool orderedByTime)
+    : JPetEvent(hits, eventType, orderedByTime), fAnnihilationPoint(anh_point)
+{
   /**/
 }
 
-void JPetLORevent::Clear(Option_t *) {
+void JPetLORevent::Clear(Option_t*)
+{
   fType = JPetEventType::kUnknown;
   fHits.clear();
 }
 
-void JPetLORevent::setAnnihilationPoint(double x, double y, double z) {
-  setAnnihilationPoint(TVector3(x, y, z));
-}
+void JPetLORevent::setAnnihilationPoint(double x, double y, double z) { setAnnihilationPoint(TVector3(x, y, z)); }
 
-void JPetLORevent::setAnnihilationPoint(const TVector3 &point) {
-  fAnnihilationPoint = point;
-}
+void JPetLORevent::setAnnihilationPoint(const TVector3& point) { fAnnihilationPoint = point; }
 
-const TVector3 &JPetLORevent::getAnnihilationPoint() const {
-  return fAnnihilationPoint;
-}
+const TVector3& JPetLORevent::getAnnihilationPoint() const { return fAnnihilationPoint; }
