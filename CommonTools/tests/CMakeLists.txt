@@ -36,12 +36,12 @@ macro(package_add_test TESTNAME)
   target_link_libraries(${TESTNAME}.x JPetFramework::JPetFramework Boost::unit_test_framework)
   add_test(NAME ${TESTNAME}.x COMMAND ${TESTNAME}.x --log_level=error --log_format=XML --log_sink=${TESTNAME}.xml)
   set_target_properties(${TESTNAME}.x PROPERTIES FOLDER tests)
-  add_dependencies(${TESTNAME}.x link_target_modulardetectoranalysis)
+  add_dependencies(${TESTNAME}.x link_target_commontools)
 endmacro()
 
 # Add custom target to create symlink from test dir to unitTestData
 add_custom_target(
-  link_target_modulardetectoranalysis
+  link_target_commontools
   ALL COMMAND ${CMAKE_COMMAND} -E
   create_symlink
   ${CMAKE_CURRENT_SOURCE_DIR}/../../unitTestData
@@ -54,4 +54,4 @@ foreach(test_source IN ITEMS ${UNIT_TEST_SOURCES})
   list(APPEND tests_names ${test}.x)
 endforeach()
 
-add_custom_target(tests_modulardetector DEPENDS ${tests_names})
+add_custom_target(tests_commontools DEPENDS ${tests_names})

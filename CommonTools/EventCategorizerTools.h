@@ -86,20 +86,17 @@ public:
 
   static double calculatePlaneCenterDistance(const JPetBaseHit& firstHit, const JPetBaseHit& secondHit, const JPetBaseHit& thirdHit);
 
-  // static TVector3 calculateAnnihilationPoint(const JPetBaseHit& hit1, const JPetBaseHit& hit2, const JPetBaseHit& hit3);
+  static TVector3 calculateAnnihilationPointByMinimization(const JPetBaseHit& hit1, const JPetBaseHit& hit2, const JPetBaseHit& hit3);
 
-  // static bool stream2Gamma(const JPetEvent& event, JPetStatistics& stats, bool saveHistos, double b2bSlotThetaDiff, double b2bTimeDiff,
-  //                          double maxScatter);
+  static TVector3 findIntersection(TVector3 hit1Pos, TVector3 hit2Pos, TVector3 hit3Pos, double t21, double t31);
 
-  // static bool stream3Gamma(const JPetEvent& event, JPetStatistics& stats, bool saveHistos, double d3SlotThetaMin, double d3TimeDiff,
-  //                          double d3DistanceFromCenter, double maxScatter);
+  static std::vector<std::vector<double>> findIntersectionsOfCircles(TVector3 Hit1Pos, TVector3 Hit2Pos, TVector3 Hit3Pos, double R1, double R2,
+                                                                     double R3, double R13, double R21, double R32);
 
-  // static TVector3 findIntersection(TVector3 hit1Pos, TVector3 hit2Pos, TVector3 hit3Pos, double t21, double t31);
+  static double findMinimumFromDerivative(std::vector<double> x_vec, std::vector<double> y_vec);
 
-  // static std::vector<std::vector<double>> findIntersectiosOfCircles(TVector3 Hit1Pos, TVector3 Hit2Pos, TVector3 Hit3Pos, double R1, double R2,
-  //                                                                   double R3, double R13, double R21, double R32);
-
-  // static double findMinimumFromDerivative(std::vector<double> x_vec, std::vector<double> y_vec);
+  static std::pair<double, TVector3> calculateAnnihilationPointAndTimeByTrilateration(const JPetBaseHit& hit1, const JPetBaseHit& hit2,
+                                                                                      const JPetBaseHit& hit3);
 };
 
 #endif /* !EVENTCATEGORIZERTOOLS_H */

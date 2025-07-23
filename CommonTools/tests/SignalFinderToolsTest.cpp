@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_SUITE(SignalFinderTestSuite)
 
 BOOST_AUTO_TEST_CASE(getChannelSignalsByPM_nullPointer_test)
 {
-  auto results = SignalFinderTools::getChannelSignalsByPM(nullptr, false);
+  auto results = SignalFinderTools::getChannelSignalsByPM(nullptr, false, -1);
   BOOST_REQUIRE(results.empty());
 }
 
@@ -72,14 +72,14 @@ BOOST_AUTO_TEST_CASE(getChannelSignalsByPM_Test)
   slot.add<JPetChannelSignal>(chSigC1);
   slot.add<JPetChannelSignal>(chSigC2);
 
-  auto results1 = SignalFinderTools::getChannelSignalsByPM(&slot, true);
+  auto results1 = SignalFinderTools::getChannelSignalsByPM(&slot, true, -1);
 
   BOOST_REQUIRE_EQUAL(results1.size(), 3);
   BOOST_REQUIRE_EQUAL(results1[1].size(), 3);
   BOOST_REQUIRE_EQUAL(results1[2].size(), 3);
   BOOST_REQUIRE_EQUAL(results1[3].size(), 2);
 
-  auto results2 = SignalFinderTools::getChannelSignalsByPM(&slot, false);
+  auto results2 = SignalFinderTools::getChannelSignalsByPM(&slot, false, -1);
 
   BOOST_REQUIRE_EQUAL(results2.size(), 3);
   BOOST_REQUIRE_EQUAL(results2[1].size(), 3);
