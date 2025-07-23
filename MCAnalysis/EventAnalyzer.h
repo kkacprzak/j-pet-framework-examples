@@ -29,7 +29,8 @@ public:
   virtual bool terminate() override;
 
 protected:
-  void fillResolutionHistograms(const JPetEvent& event, const JPetTimeWindowMC* tw);
+  const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
+  bool fSaveControlHistos = true;
   bool fIsMC = false;
 };
 #endif /* !EVENTANALYZER_H */

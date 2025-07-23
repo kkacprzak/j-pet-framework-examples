@@ -36,10 +36,9 @@ set(projectBinary ${projectName}.x)
 project(${projectName} CXX)
 
 
-set(use_modules_from ../ModularDetectorAnalysis)
 set(HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.h
-  ${use_modules_from}/EventFinder.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/EventFinderMC.h
   #${use_modules_from}/Downscaler.h
   ../NTupleExport/NTupler.h
 )
@@ -47,7 +46,7 @@ set(HEADERS
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.cpp
-  ${use_modules_from}/EventFinder.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/EventFinderMC.cpp
   #${use_modules_from}/Downscaler.cpp
   ../NTupleExport/NTupler.cpp
 )

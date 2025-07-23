@@ -30,13 +30,23 @@ bool EventAnalyzer::init()
 {
   INFO("Event analysis started.");
 
-  getStatistics().createHistogramWithAxes(new TH1D("z_res", "Resolution along Z", 301, -15.05, 15.05), "Z_{REC}-Z_{MC} [cm]");
+  // Getting bool for saving histograms
+  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
+  {
+    fSaveControlHistos = getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
+  }
 
-  getStatistics().createHistogramWithAxes(new TH1D("Edep_res", "Resolution of deposited energy", 201, -201., 201.), "E_{REC}-E_{MC} [keV]");
+  // Initialize histograms
+  if (fSaveControlHistos)
+  {
+    getStatistics().createHistogramWithAxes(new TH1D("z_res", "Resolution along Z", 301, -15.05, 15.05), "Z_{REC}-Z_{MC} [cm]");
+    getStatistics().createHistogramWithAxes(new TH1D("Edep_res", "Resolution of deposited energy", 201, -201., 201.), "E_{REC}-E_{MC} [keV]");
+    getStatistics().createHistogramWithAxes(new TH1D("evt_ids_multi", "Number of different events in event time window", 10, -0.5, 9.5),
+                                            "Multiplicity of evt IDs", "Number of events");
+  }
 
-  // Input events type
-  fOutputEvents = new JPetTimeWindow("JPetEvent");
-
+  // Output events type - time window with MonteCarlo data
+  fOutputEvents = new JPetTimeWindowMC("JPetEvent", "JPetRawMCHit", "JPetMCDecayTree");
   return true;
 }
 
@@ -46,8 +56,8 @@ bool EventAnalyzer::exec()
   // Identify whether the input events are MC or DATA.
   // In case of MC, store the pointer to the TimeWindowMC object
   // which contains "true MC" information about the generated events.
-  JPetTimeWindowMC* time_window_mc = nullptr;
-  if (time_window_mc = dynamic_cast<JPetTimeWindowMC* const>(fEvent))
+  JPetTimeWindowMC* timeWindowMC = nullptr;
+  if (timeWindowMC = dynamic_cast<JPetTimeWindowMC* const>(fEvent))
   {
     fIsMC = true;
     INFO("The input file is MC.");
@@ -64,11 +74,33 @@ bool EventAnalyzer::exec()
     {
       const auto& event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](i));
 
-      // if the input is MC, we fill resolution histograms
-      // to check if MC smearing works fine
       if (fIsMC)
       {
-        fillResolutionHistograms(event, time_window_mc);
+        vector<int> evtIDs;
+        for (int k = 0; k < event.getHits().size(); ++k)
+        {
+          auto reconstructedHit = dynamic_cast<const JPetMCRecoHit*>(event.getHits().at(k));
+          if (!reconstructedHit)
+          {
+            continue;
+          }
+          // for each reconstructed hit, we access the corresponding "true MC" hit
+          const JPetRawMCHit& mcHit = timeWindowMC->getMCHit<JPetRawMCHit>(reconstructedHit->getMCindex());
+          if (find(evtIDs.begin(), evtIDs.end(), mcHit.getMCVtxIndex()) == evtIDs.end())
+          {
+            evtIDs.push_back(mcHit.getMCVtxIndex());
+          }
+
+          if (fSaveControlHistos)
+          {
+            getStatistics().fillHistogram("z_res", reconstructedHit->getPos().Z() - mcHit.getPos().Z());
+            getStatistics().fillHistogram("Edep_res", reconstructedHit->getEnergy() - mcHit.getEnergy());
+          }
+        }
+        if (fSaveControlHistos)
+        {
+          getStatistics().fillHistogram("evt_ids_multi", evtIDs.size());
+        }
       }
 
       fOutputEvents->add<JPetEvent>(event);
@@ -86,23 +118,4 @@ bool EventAnalyzer::terminate()
 {
   INFO("Event analysis completed.");
   return true;
-}
-
-void EventAnalyzer::fillResolutionHistograms(const JPetEvent& event, const JPetTimeWindowMC* tw)
-{
-
-  int hits_number = event.getHits().size();
-  for (int k = 0; k < hits_number; ++k)
-  {
-    auto reconstructed_hit = dynamic_cast<const JPetMCRecoHit*>(event.getHits().at(k));
-    if (!reconstructed_hit)
-    {
-      continue;
-    }
-    // for each reconstructed hit, we access the corresponding "true MC" hit
-    const JPetRawMCHit& mc_hit = tw->getMCHit<JPetRawMCHit>(reconstructed_hit->getMCindex());
-
-    getStatistics().fillHistogram("z_res", reconstructed_hit->getPos().Z() - mc_hit.getPos().Z());
-    getStatistics().fillHistogram("Edep_res", reconstructed_hit->getEnergy() - mc_hit.getEnergy());
-  }
 }

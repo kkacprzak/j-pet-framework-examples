@@ -13,9 +13,9 @@
  *  @file main.cpp
  */
 
-#include "../ModularDetectorAnalysis/EventFinder.h"
 #include "../NTupleExport/NTupler.h"
 #include "EventAnalyzer.h"
+#include "EventFinderMC.h"
 #include <JPetManager/JPetManager.h>
 
 using namespace std;
@@ -26,13 +26,13 @@ int main(int argc, const char* argv[])
   {
     JPetManager& manager = JPetManager::getManager();
 
-    manager.registerTask<EventFinder>("EventFinder");
-    manager.registerTask<NTupler>("NTupler");
-    // manager.registerTask<EventAnalyzer>("EventAnalyzer");
+    manager.registerTask<EventFinderMC>("EventFinderMC");
+    manager.registerTask<EventAnalyzer>("EventAnalyzer");
+    // manager.registerTask<NTupler>("NTupler");
 
-    manager.useTask("EventFinder", "hits", "unk.evt");
-    manager.useTask("NTupler", "unk.evt", "histo.evt");
-    // manager.useTask("EventAnalyzer", "pre.evt", "ana.evt");
+    manager.useTask("EventFinderMC", "hits", "mc.evt");
+    manager.useTask("EventAnalyzer", "mc.evt", "ana.evt");
+    // manager.useTask("NTupler", "unk.evt", "histo.evt");
 
     manager.run(argc, argv);
   }
