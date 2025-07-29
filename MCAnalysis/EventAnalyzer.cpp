@@ -52,7 +52,6 @@ bool EventAnalyzer::init()
 
 bool EventAnalyzer::exec()
 {
-
   // Identify whether the input events are MC or DATA.
   // In case of MC, store the pointer to the TimeWindowMC object
   // which contains "true MC" information about the generated events.
@@ -69,7 +68,6 @@ bool EventAnalyzer::exec()
 
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
-
     for (uint i = 0; i < timeWindow->getNumberOfEvents(); i++)
     {
       const auto& event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](i));
