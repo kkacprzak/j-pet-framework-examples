@@ -20,6 +20,7 @@
 #include "JPetParamBank/JPetParamBank.h"
 #include "JPetStatistics/JPetStatistics.h"
 #include "Signals/JPetChannelSignal/JPetChannelSignal.h"
+#include "TDCChannel.h"
 #include <boost/property_tree/ptree.hpp>
 #include <vector>
 
@@ -36,6 +37,9 @@ public:
   static void flagChannelSignals(std::vector<JPetChannelSignal>& inputSigChs, JPetStatistics& stats, bool saveHistos);
 
   static JPetChannelSignal generateChannelSignal(double tdcChannelTime, const JPetChannel& channel, JPetChannelSignal::EdgeType edge, double offset);
+
+  static std::vector<JPetChannelSignal> buildChannelSignals(TDCChannel* tdcChannel, const JPetChannel& channel, double maxTime, double minTime,
+                                                            double offset);
 };
 
 #endif /* !TIMEWINDOWCREATORTOOLS_H */
