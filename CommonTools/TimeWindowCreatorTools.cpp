@@ -95,9 +95,42 @@ JPetChannelSignal TimeWindowCreatorTools::generateChannelSignal(double tdcChanne
                                                                 double offset)
 {
   JPetChannelSignal chSig;
+  // Converting from [ns] to [ps]
   chSig.setTime(1000.0 * tdcChannelTime - offset);
   chSig.setEdgeType(edge);
   chSig.setChannel(channel);
   chSig.setRecoFlag(JPetRecoSignal::Unknown);
   return chSig;
+}
+
+/**
+ * Building all Signal Chnnels from one TDC in Big Barrel
+ */
+vector<JPetChannelSignal> TimeWindowCreatorTools::buildChannelSignals(TDCChannel* tdcChannel, const JPetChannel& channel, double maxTime,
+                                                                      double minTime, double offset)
+{
+  vector<JPetChannelSignal> allTDCChSigs;
+  // Loop over all entries on leading edge in current TDCChannel and create JPetChannelSignal
+  for (int j = 0; j < tdcChannel->GetLeadHitsNum(); j++)
+  {
+    auto leadTime = tdcChannel->GetLeadTime(j);
+    if (leadTime > maxTime || leadTime < minTime)
+    {
+      continue;
+    }
+    auto leadChSig = generateChannelSignal(leadTime, channel, JPetChannelSignal::Leading, offset);
+    allTDCChSigs.push_back(leadChSig);
+  }
+  // Loop over all entries on trailing edge in current TDCChannel and create JPetChannelSignal
+  for (int j = 0; j < tdcChannel->GetTrailHitsNum(); j++)
+  {
+    auto trailTime = tdcChannel->GetTrailTime(j);
+    if (trailTime > maxTime || trailTime < minTime)
+    {
+      continue;
+    }
+    auto trailChSig = generateChannelSignal(trailTime, channel, JPetChannelSignal::Trailing, offset);
+    allTDCChSigs.push_back(trailChSig);
+  }
+  return allTDCChSigs;
 }

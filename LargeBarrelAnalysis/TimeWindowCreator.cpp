@@ -15,15 +15,17 @@
 
 #include "TimeWindowCreator.h"
 #include "../CommonTools/TimeWindowCreatorTools.h"
+#include "EventIII.h"
+#include "TDCChannel.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
-#include <JPetTaskIO/JPetInputHandlerHLD.h>
+// #include <JPetTaskIO/JPetInputHandlerHLD.h>
 #include <JPetWriter/JPetWriter.h>
 #include <Signals/JPetChannelSignal/JPetChannelSignal.h>
 
 #include <boost/property_tree/json_parser.hpp>
 
 #include <iostream>
-#include <unpacker_types.hpp>
+// #include <unpacker_types.hpp>
 #include <utility>
 
 using namespace jpet_options_tools;
@@ -88,73 +90,117 @@ bool TimeWindowCreator::init()
 
 bool TimeWindowCreator::exec()
 {
-  if (auto event = dynamic_cast<JPetHLDdata* const>(fEvent))
+  // if (auto event = dynamic_cast<JPetHLDdata* const>(fEvent))
+  if (auto event = dynamic_cast<EventIII* const>(fEvent))
   {
-    vector<JPetChannelSignal> allChannelSignals;
-    unordered_map<int, vector<JPetChannelSignal>> singleChannelSignals;
-
-    for (auto& endp_data : event->fOriginalData)
+    int kTDCChannels = event->GetTotalNTDCChannels();
+    auto tdcChannels = event->GetTDCChannelsArray();
+    for (int i = 0; i < kTDCChannels; ++i)
     {
-      unsigned int address = endp_data.first;
+      auto tdcChannel = dynamic_cast<TDCChannel* const>(tdcChannels->At(i));
+      auto channelID = tdcChannel->GetChannel();
 
-      if (fChannelOffsets.count(address) == 0)
+      // Skip trigger signals from TRB - every 65th
+      if (channelID % 65 == 0)
       {
         continue;
       }
-      unsigned int channel_offset = fChannelOffsets.at(address);
 
-      std::vector<unpacker::hit_t>& data = endp_data.second;
-
-      for (auto& hit : data)
+      // Check if channel exists in database from loaded local file
+      if (getParamBank().getChannels().count(channelID) == 0)
       {
-        int channelNumber = channel_offset + hit.channel_id;
-
-        // Skip trigger signals - every 65th
-        if (channelNumber % 65 == 0)
+        if (fSaveControlHistos)
         {
-          continue;
+          getStatistics().fillHistogram("wrong_channel", channelID);
         }
-
-        // Skip if the channel number is absent in the configuration
-        if (getParamBank().getChannels().count(channelNumber) == 0)
-        {
-          if (fSaveControlHistos)
-          {
-            getStatistics().fillHistogram("wrong_channel", channelNumber);
-          }
-          continue;
-        }
-
-        auto& channel = getParamBank().getChannel(channelNumber);
-        double synchroOffset = fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
-
-        // double time = hit.time / 1000.;
-        double time = hit.time;
-
-        // time = time - (fMaxTime - fMinTime);
-        // time *= -1.;
-
-        if (time < fMinTime || time > fMaxTime)
-        {
-          continue;
-        }
-
-        auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
-            time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, synchroOffset);
-
-        singleChannelSignals[channel.getID()].push_back(channelSignal);
+        continue;
       }
+      // Get channel for corresponding number
+      auto& channel = getParamBank().getChannel(channelID);
+      double synchroOffset =
+          fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
+
+      // Building Channel Signals for this TDC Channel
+      auto allChSigs = TimeWindowCreatorTools::buildChannelSignals(tdcChannel, channel, fMaxTime, fMinTime, synchroOffset);
+
+      // Sort Signal Channels in time
+      TimeWindowCreatorTools::sortByTime(allChSigs);
+
+      // Flag with Good or Corrupted
+      TimeWindowCreatorTools::flagChannelSignals(allChSigs, getStatistics(), fSaveControlHistos);
+
+      // Save result
+      saveChannelSignals(allChSigs);
     }
 
-    for (auto& chSigs : singleChannelSignals)
-    {
-      TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
-      // Sort Signal Channels in time
-      TimeWindowCreatorTools::sortByTime(chSigs.second);
-      allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
-    }
-    // Save result
-    saveChannelSignals(allChannelSignals);
+    ///////////////////////////////////////////////////////////
+
+    // vector<JPetChannelSignal> allChannelSignals;
+    // unordered_map<int, vector<JPetChannelSignal>> singleChannelSignals;
+
+    // for (auto& endp_data : event->fOriginalData)
+    // {
+    //   unsigned int address = endp_data.first;
+    //
+    //   if (fChannelOffsets.count(address) == 0)
+    //   {
+    //     continue;
+    //   }
+    //   unsigned int channel_offset = fChannelOffsets.at(address);
+    //
+    //   std::vector<unpacker::hit_t>& data = endp_data.second;
+    //
+    //   for (auto& hit : data)
+    //   {
+    //     int channelNumber = channel_offset + hit.channel_id;
+    //
+    //     // Skip trigger signals - every 65th
+    //     if (channelNumber % 65 == 0)
+    //     {
+    //       continue;
+    //     }
+    //
+    //     // Skip if the channel number is absent in the configuration
+    //     if (getParamBank().getChannels().count(channelNumber) == 0)
+    //     {
+    //       if (fSaveControlHistos)
+    //       {
+    //         getStatistics().fillHistogram("wrong_channel", channelNumber);
+    //       }
+    //       continue;
+    //     }
+    //
+    //     auto& channel = getParamBank().getChannel(channelNumber);
+    //     double synchroOffset =
+    //         fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
+    //
+    //     // double time = hit.time / 1000.;
+    //     double time = hit.time;
+    //
+    //     // time = time - (fMaxTime - fMinTime);
+    //     // time *= -1.;
+    //
+    //     if (time < fMinTime || time > fMaxTime)
+    //     {
+    //       continue;
+    //     }
+    //
+    //     auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
+    //         time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, synchroOffset);
+    //
+    //     singleChannelSignals[channel.getID()].push_back(channelSignal);
+    //   }
+    // }
+    //
+    // for (auto& chSigs : singleChannelSignals)
+    // {
+    //   TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
+    //   // Sort Signal Channels in time
+    //   TimeWindowCreatorTools::sortByTime(chSigs.second);
+    //   allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
+    // }
+    // // Save result
+    // saveChannelSignals(allChannelSignals);
   }
   else
   {
@@ -184,12 +230,12 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
       getStatistics().fillHistogram("chsig_time", channelSig.getTime());
       getStatistics().fillHistogram("channel_occ", channelSig.getChannel().getID());
 
-      if(channelSig.getEdgeType()==JPetChannelSignal::Leading)
-      {
-        getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
-        getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
-      }
-      
+      // if (channelSig.getEdgeType() == JPetChannelSignal::Leading)
+      // {
+      getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
+      getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
+      // }
+
       if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
       {
         getStatistics().fillHistogram("reco_flags_chsig", 1);
