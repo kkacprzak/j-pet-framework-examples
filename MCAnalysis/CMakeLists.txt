@@ -39,6 +39,7 @@ project(${projectName} CXX)
 set(HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/EventFinderMC.h
+  ../CommonTools/EventCategorizerTools.h
   #${use_modules_from}/Downscaler.h
   ../NTupleExport/NTupler.h
 )
@@ -47,6 +48,7 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventAnalyzer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventFinderMC.cpp
+  ../CommonTools/EventCategorizerTools.cpp
   #${use_modules_from}/Downscaler.cpp
   ../NTupleExport/NTupler.cpp
 )

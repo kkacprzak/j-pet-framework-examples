@@ -184,7 +184,7 @@ add_subdirectory(MCAnalysis)
 add_subdirectory(ListmodeExport)
 add_subdirectory(NTupleExport)
 add_subdirectory(NTupleAnalysis)
-add_subdirectory(UserDataClassExample)
+#add_subdirectory(UserDataClassExample)
 
 ################################################################################
 ## Unit tests

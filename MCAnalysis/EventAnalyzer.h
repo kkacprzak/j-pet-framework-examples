@@ -32,5 +32,9 @@ protected:
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   bool fSaveControlHistos = true;
   bool fIsMC = false;
+  double fScatterTimeMin = -5000.0;
+  double fScatterTimeMax = -1000.0;
+  double fScatterAngleMin = 160.0;
+  double fScatterAngleMax = 180.0;
 };
 #endif /* !EVENTANALYZER_H */
