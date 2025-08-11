@@ -15,8 +15,8 @@
 
 #include "TimeWindowCreator.h"
 #include "../CommonTools/TimeWindowCreatorTools.h"
-#include "EventIII.h"
-#include "TDCChannel.h"
+#include "Unpacker2/EventIII.h"
+#include "Unpacker2/TDCChannel.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 // #include <JPetTaskIO/JPetInputHandlerHLD.h>
 #include <JPetWriter/JPetWriter.h>

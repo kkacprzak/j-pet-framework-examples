@@ -233,12 +233,22 @@ void SignalFinder::initialiseHistograms()
                                                      200, 0.0, fLeadTrailMaxTime),
                                             "time diff [ps]", "Number of Signal Channels Pairs");
 
+    getStatistics().createHistogramWithAxes(new TH2D(Form("lead_trail_thr%d_diff_pm", thr),
+                                                    Form("Time Difference between leading and trailing Signal Channels THR%d in found signals per PM", thr),
+                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
+                                          "PM ID", "time diff [ps]");                                            
+
     if (thr > 1)
     {
       getStatistics().createHistogramWithAxes(new TH1D(Form("lead_thr1_thr%d_diff", thr),
                                                        Form("Time Difference between leading Signal Channels THR1 and THR%d in found signals", thr),
                                                        200, -fEdgeMaxTime, fEdgeMaxTime),
                                               "time diff [ps]", "Number of Signal Channels Pairs");
+
+      getStatistics().createHistogramWithAxes(new TH2D(Form("lead_thr1_thr%d_diff_pm", thr),
+                                                       Form("Time Difference between leading Signal Channels THR1 and THR%d in found signals per PM", thr),
+                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, -fEdgeMaxTime, fEdgeMaxTime),
+                                          "PM ID", "time diff [ps]");                                                
     }
   }
 }
