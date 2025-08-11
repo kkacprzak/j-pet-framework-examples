@@ -320,7 +320,7 @@ double SignalFinderTools::calculatePMSignalToT(JPetPMSignal& pmSignal, SignalFin
 
   // Applying ToT normalization constatns
   double totNormA = calibTree.get("sipm." + to_string(pmSignal.getPM().getID()) + ".tot_factor_a", 1.0);
-  double totNormB = calibTree.get("sipm." + to_string(pmSignal.getPM().getID()) + ".tot_factor_b", 0.0) / 1000.0;
+  double totNormB = calibTree.get("sipm." + to_string(pmSignal.getPM().getID()) + ".tot_factor_b", 0.0);
   return tot * totNormA + totNormB;
 }
 

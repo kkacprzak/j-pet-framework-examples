@@ -268,7 +268,7 @@ void TimeWindowCreator::initialiseHistograms()
   getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Signal Channels Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
                                           "Channels Signal in Time Slot", "Number of Time Slots");
 
-  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 200.5), "Channels Signal in Time Slot",
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 100.5), "Channels Signal in Time Slot",
                                           "Number of Time Slots");
 
   // Wrong configuration
