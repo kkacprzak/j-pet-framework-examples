@@ -122,126 +122,129 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
   }
 
   assert(leadChSigs.size() > 0);
-  while (leadChSigs.at(0).size() > 0)
-  {
-    int closestTrailingChannelSignalTHR1 = findTrailingChannelSignal(leadChSigs.at(0).at(0), chSigLeadTrailMaxTime, trailChSigs.at(0));
-
-    if (closestTrailingChannelSignalTHR1 == -1)
+  for(int jj = 0; jj < leadChSigs.size(); jj++)
+  {  
+    while (leadChSigs.at(jj).size() > 0)
     {
-      // Remains unused
-      unusedLeads.push_back(leadChSigs.at(0).at(0));
-      leadChSigs.at(0).erase(leadChSigs.at(0).begin());
-      continue;
-    }
+      int closestTrailingChannelSignalTHR = findTrailingChannelSignal(leadChSigs.at(jj).at(0), chSigLeadTrailMaxTime, trailChSigs.at(jj));
 
-    // PM Signal is created if the Lead-Trail pair is found at THR 1
-    JPetPMSignal pmSig;
-    pmSig.setPM(leadChSigs.at(0).at(0).getChannel().getPM());
-    pmSig.setRecoFlag(JPetRecoSignal::Good);
-
-    if (!pmSig.addLeadTrailPair(leadChSigs.at(0).at(0), trailChSigs.at(0).at(closestTrailingChannelSignalTHR1)))
-    {
-      // Remains unused
-      unusedLeads.push_back(leadChSigs.at(0).at(0));
-      leadChSigs.at(0).erase(leadChSigs.at(0).begin());
-      continue;
-    }
-
-    if (saveHistos)
-    {
-      double tDiffTOT = trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getTime() - leadChSigs.at(0).at(0).getTime();
-      stats.fillHistogram("lead_trail_thr1_diff", tDiffTOT);
-      stats.fillHistogram("lead_trail_thr1_diff_pm", pmSig.getPM().getID(), tDiffTOT);
-    }
-
-    // Modifying flag if needed
-    if (leadChSigs.at(0).at(0).getRecoFlag() == JPetRecoSignal::Corrupted ||
-        trailChSigs.at(0).at(closestTrailingChannelSignalTHR1).getRecoFlag() == JPetRecoSignal::Corrupted)
-    {
-      pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
-    }
-
-    // Adding Lead-Trail pairs if found on other THR
-    for (unsigned int kk = 1; kk < numberOfThrs; kk++)
-    {
-      int nextThrChannelSignalIndex = findChannelSignalOnNextThr(leadChSigs.at(0).at(0).getTime(), chSigEdgeMaxTime, leadChSigs.at(kk));
-
-      if (nextThrChannelSignalIndex != -1)
+      if (closestTrailingChannelSignalTHR == -1)
       {
-        int closestTrailingChannelSignal =
-            findTrailingChannelSignal(leadChSigs.at(kk).at(nextThrChannelSignalIndex), chSigLeadTrailMaxTime, trailChSigs.at(kk));
-        if (closestTrailingChannelSignal != -1)
+        // Remains unused
+        unusedLeads.push_back(leadChSigs.at(jj).at(0));
+        leadChSigs.at(jj).erase(leadChSigs.at(jj).begin());
+        continue;
+      }
+
+      // PM Signal is created if the Lead-Trail pair is found at THR 1
+      JPetPMSignal pmSig;
+      pmSig.setPM(leadChSigs.at(jj).at(0).getChannel().getPM());
+      pmSig.setRecoFlag(JPetRecoSignal::Good);
+
+      if (!pmSig.addLeadTrailPair(leadChSigs.at(jj).at(0), trailChSigs.at(jj).at(closestTrailingChannelSignalTHR)))
+      {
+        // Remains unused
+        unusedLeads.push_back(leadChSigs.at(jj).at(0));
+        leadChSigs.at(jj).erase(leadChSigs.at(jj).begin());
+        continue;
+      }
+
+      if (saveHistos)
+      {
+        double tDiffTOT = trailChSigs.at(jj).at(closestTrailingChannelSignalTHR).getTime() - leadChSigs.at(jj).at(0).getTime();
+        stats.fillHistogram(Form("lead_trail_thr%d_diff", jj + 1), tDiffTOT);
+        stats.fillHistogram(Form("lead_trail_thr%d_diff_pm", jj + 1), pmSig.getPM().getID(), tDiffTOT);
+      }
+
+      // Modifying flag if needed
+      if (leadChSigs.at(jj).at(0).getRecoFlag() == JPetRecoSignal::Corrupted ||
+          trailChSigs.at(jj).at(closestTrailingChannelSignalTHR).getRecoFlag() == JPetRecoSignal::Corrupted)
+      {
+        pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
+      }
+
+      // Adding Lead-Trail pairs if found on other THR
+      for (int kk = jj + 1; kk < numberOfThrs; kk++)
+      {
+        int nextThrChannelSignalIndex = findChannelSignalOnNextThr(leadChSigs.at(jj).at(0).getTime(), chSigEdgeMaxTime, leadChSigs.at(kk));
+
+        if (nextThrChannelSignalIndex != -1)
         {
-          if (pmSig.addLeadTrailPair(leadChSigs.at(kk).at(nextThrChannelSignalIndex), trailChSigs.at(kk).at(closestTrailingChannelSignal)))
+          int closestTrailingChannelSignal =
+              findTrailingChannelSignal(leadChSigs.at(kk).at(nextThrChannelSignalIndex), chSigLeadTrailMaxTime, trailChSigs.at(kk));
+          if (closestTrailingChannelSignal != -1)
           {
-            if (saveHistos)
+            if (pmSig.addLeadTrailPair(leadChSigs.at(kk).at(nextThrChannelSignalIndex), trailChSigs.at(kk).at(closestTrailingChannelSignal)))
             {
-              double tDiffTHR = leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime() - leadChSigs.at(0).at(0).getTime();
-              double tDiffTOT =
-                  trailChSigs.at(kk).at(closestTrailingChannelSignal).getTime() - leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime();
+              if (saveHistos)
+              {
+                double tDiffTHR = leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime() - leadChSigs.at(jj).at(0).getTime();
+                double tDiffTOT =
+                    trailChSigs.at(kk).at(closestTrailingChannelSignal).getTime() - leadChSigs.at(kk).at(nextThrChannelSignalIndex).getTime();
 
-              stats.fillHistogram(Form("lead_thr1_thr%d_diff", kk + 1), tDiffTHR);
-              stats.fillHistogram(Form("lead_trail_thr%d_diff", kk + 1), tDiffTOT);
+                stats.fillHistogram(Form("lead_thr%d_thr%d_diff", jj + 1, kk + 1), tDiffTHR);
+                stats.fillHistogram(Form("lead_trail_thr%d_diff", kk + 1), tDiffTOT);
 
-              stats.fillHistogram(Form("lead_thr1_thr%d_diff_pm", kk + 1), pmSig.getPM().getID(), tDiffTHR);
-              stats.fillHistogram(Form("lead_trail_thr%d_diff_pm", kk + 1), pmSig.getPM().getID(), tDiffTOT);
+                stats.fillHistogram(Form("lead_thr%d_thr%d_diff_pm", jj + 1, kk + 1), pmSig.getPM().getID(), tDiffTHR);
+                stats.fillHistogram(Form("lead_trail_thr%d_diff_pm", kk + 1), pmSig.getPM().getID(), tDiffTOT);
+              }
+
+              // Modifying flag if needed
+              if (leadChSigs.at(kk).at(nextThrChannelSignalIndex).getRecoFlag() == JPetRecoSignal::Corrupted ||
+                  trailChSigs.at(kk).at(closestTrailingChannelSignal).getRecoFlag() == JPetRecoSignal::Corrupted)
+              {
+                pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
+              }
+
+              trailChSigs.at(kk).erase(trailChSigs.at(kk).begin() + closestTrailingChannelSignal);
+              leadChSigs.at(kk).erase(leadChSigs.at(kk).begin() + nextThrChannelSignalIndex);
             }
-
-            // Modifying flag if needed
-            if (leadChSigs.at(kk).at(nextThrChannelSignalIndex).getRecoFlag() == JPetRecoSignal::Corrupted ||
-                trailChSigs.at(kk).at(closestTrailingChannelSignal).getRecoFlag() == JPetRecoSignal::Corrupted)
-            {
-              pmSig.setRecoFlag(JPetRecoSignal::Corrupted);
-            }
-
-            trailChSigs.at(kk).erase(trailChSigs.at(kk).begin() + closestTrailingChannelSignal);
-            leadChSigs.at(kk).erase(leadChSigs.at(kk).begin() + nextThrChannelSignalIndex);
           }
         }
       }
-    }
 
-    // Finish bulding this signal
-    pmSig.setTime(leadChSigs.at(0).at(0).getTime());
-    pmSig.setToT(calculatePMSignalToT(pmSig, type, calibTree));
-    pmSigVec.push_back(pmSig);
+      // Finish bulding this signal
+      pmSig.setTime(leadChSigs.at(jj).at(0).getTime());
+      pmSig.setToT(calculatePMSignalToT(pmSig, type, calibTree));
+      pmSigVec.push_back(pmSig);
 
-    trailChSigs.at(0).erase(trailChSigs.at(0).begin() + closestTrailingChannelSignalTHR1);
-    leadChSigs.at(0).erase(leadChSigs.at(0).begin());
+      trailChSigs.at(jj).erase(trailChSigs.at(jj).begin() + closestTrailingChannelSignalTHR);
+      leadChSigs.at(jj).erase(leadChSigs.at(jj).begin());
 
-    // Filling control histograms
-    if (saveHistos && gRandom->Uniform() < 0.001)
-    {
-      if (pmSig.getRecoFlag() == JPetRecoSignal::Good)
+      // Filling control histograms
+      if (saveHistos)
       {
-        stats.fillHistogram("reco_flags_pmsig", 1);
-      }
-      else if (pmSig.getRecoFlag() == JPetRecoSignal::Corrupted)
-      {
-        stats.fillHistogram("reco_flags_pmsig", 2);
-      }
-      else
-      {
-        stats.fillHistogram("reco_flags_pmsig", 3);
-      }
+        if (pmSig.getRecoFlag() == JPetRecoSignal::Good)
+        {
+          stats.fillHistogram("reco_flags_pmsig", 1);
+        }
+        else if (pmSig.getRecoFlag() == JPetRecoSignal::Corrupted)
+        {
+          stats.fillHistogram("reco_flags_pmsig", 2);
+        }
+        else
+        {
+          stats.fillHistogram("reco_flags_pmsig", 3);
+        }
 
-      for (auto chSig : unusedLeads)
-      {
-        stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber() - 1);
-        stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
-      }
-
-      for (int jj = 0; jj < numberOfThrs; jj++)
-      {
-        for (auto chSig : leadChSigs.at(jj))
+        for (auto chSig : unusedLeads)
         {
           stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber() - 1);
           stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
         }
-        for (auto chSig : trailChSigs.at(jj))
+
+        for (int ll = 0; ll < numberOfThrs; ll++)
         {
-          stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber());
-          stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
+          for (auto chSig : leadChSigs.at(ll))
+          {
+            stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber() - 1);
+            stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
+          }
+          for (auto chSig : trailChSigs.at(ll))
+          {
+            stats.fillHistogram("unused_chsig_thr", 2 * chSig.getChannel().getThresholdNumber());
+            stats.fillHistogram("unused_chsig_pm", chSig.getChannel().getPM().getID());
+          }
         }
       }
     }

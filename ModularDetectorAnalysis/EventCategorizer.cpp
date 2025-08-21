@@ -355,7 +355,7 @@ void EventCategorizer::saveEvents(const vector<JPetEvent>& events)
 {
   for (const auto& event : events)
   {
-    fOutputEvents->add<JPetEvent>(event);
+    // fOutputEvents->add<JPetEvent>(event);
   }
 }
 
@@ -587,19 +587,19 @@ void EventCategorizer::initialiseHistograms()
                                           "Time Diff [ps]", "Number of Hit Pairs");
 
   getStatistics().createHistogramWithAxes(
-      new TH2D("scatter_angle_time", "Scatter angle vs. scatter test measure", 201, -4000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
+      new TH2D("scatter_angle_time", "Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
       "Scatter angle");
 
   getStatistics().createHistogramWithAxes(
-      new TH2D("scatter_angle_time_small", "Scatter angle vs. scatter test measure", 201, -4000.0, 6000.0, 41, 139.5, 180.5), "Time Diff [ps]",
+      new TH2D("scatter_angle_time_small", "Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 41, 139.5, 180.5), "Time Diff [ps]",
       "Scatter angle");
 
   getStatistics().createHistogramWithAxes(
-      new TH2D("scatter_angle_time_pass", "Passed Scatter angle vs. scatter test measure", 201, -4000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
+      new TH2D("scatter_angle_time_pass", "Passed Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
       "Scatter angle");
 
   getStatistics().createHistogramWithAxes(
-      new TH2D("scatter_angle_time_fail", "Failed Scatter angle vs. scatter test measure", 201, -4000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
+      new TH2D("scatter_angle_time_fail", "Failed Scatter angle vs. scatter test measure", 201, -6000.0, 6000.0, 181, -0.5, 180.5), "Time Diff [ps]",
       "Scatter angle");
 
   // Histograms for 3 gamma events

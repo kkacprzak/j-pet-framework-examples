@@ -93,9 +93,15 @@ bool TimeWindowCreator::exec()
   // if (auto event = dynamic_cast<JPetHLDdata* const>(fEvent))
   if (auto event = dynamic_cast<EventIII* const>(fEvent))
   {
-    int kTDCChannels = event->GetTotalNTDCChannels();
+    int numTDCChannels = event->GetTotalNTDCChannels();
     auto tdcChannels = event->GetTDCChannelsArray();
-    for (int i = 0; i < kTDCChannels; ++i)
+
+    if (fSaveControlHistos)
+    {
+      getStatistics().fillHistogram("chsig_tslot", numTDCChannels);
+    }
+
+    for (int i = 0; i < numTDCChannels; ++i)
     {
       auto tdcChannel = dynamic_cast<TDCChannel* const>(tdcChannels->At(i));
       auto channelID = tdcChannel->GetChannel();
@@ -217,10 +223,10 @@ bool TimeWindowCreator::terminate()
 
 void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& channelSigVec)
 {
-  if (fSaveControlHistos)
-  {
-    getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
-  }
+  // if (fSaveControlHistos)
+  // {
+  //   getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
+  // }
 
   for (auto& channelSig : channelSigVec)
   {

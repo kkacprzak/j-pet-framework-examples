@@ -127,26 +127,27 @@ bool TimeWindowCreator::exec()
 
         double time = hit.time / 1000.;
 
-        time = time - (fMaxTime - fMinTime);
-        time *= -1.;
+        // time = time - (fMaxTime - fMinTime);
+        // time *= -1.;
 
         if (time < fMinTime || time > fMaxTime)
         {
           continue;
         }
 
-        auto sigCh = TimeWindowCreatorTools::generateChannelSignal(
+        auto chSig = TimeWindowCreatorTools::generateChannelSignal(
             time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, offset);
-        singleChannelSignals[channel.getID()].push_back(sigCh);
+        singleChannelSignals[channel.getID()].push_back(chSig);
       }
     }
 
     for (auto& chSigs : singleChannelSignals)
     {
-
-      TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
       // Sort Signal Channels in time
       TimeWindowCreatorTools::sortByTime(chSigs.second);
+      // Filter repeated edges
+      TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
+      
       allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
     }
     // Save result
@@ -187,6 +188,7 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
       {
         // if (gRandom->Uniform() < fScalingFactor)
         // {
+        getStatistics().fillHistogram("chsig_time", channelSig.getTime());
         getStatistics().fillHistogram("occ_channels", channelSig.getChannel().getID());
 
         getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
@@ -224,7 +226,10 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 
 void TimeWindowCreator::initialiseHistograms()
 {
-  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 50, 0.5, 50.5), "Channels Signal in Time Slot",
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Channel Signals Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Channels Signal in Time Slot", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 150, 0.5, 150.5), "Channels Signal in Time Slot",
                                           "Number of Time Slots");
 
   // Channels and PMs IDs from Param Bank

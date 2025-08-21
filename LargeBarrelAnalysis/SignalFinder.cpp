@@ -255,67 +255,30 @@ void SignalFinder::initialiseHistograms()
       "Number of Channel Signals");
 
   // Threshold time differences
-  getStatistics().createHistogramWithAxes(new TH1D("lead_thr1_thr2_diff",
-                                                   "Time Difference between leading Signal Channels THR1 and THR2 in found signals", 200,
-                                                   -fEdgeMaxTime, fEdgeMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_thr1_thr3_diff",
-                                                   "Time Difference between leading Signal Channels THR1 and THR3 in found signals", 200,
-                                                   -fEdgeMaxTime, fEdgeMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_thr1_thr4_diff",
-                                                   "Time Difference between leading Signal Channels THR1 and THR4 in found signals", 200,
-                                                   -fEdgeMaxTime, fEdgeMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_trail_thr1_diff",
-                                                   "Time Difference between leading and trailing Signal Channels THR1 in found signals", 200, 0.0,
-                                                   fLeadTrailMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_trail_thr2_diff",
-                                                   "Time Difference between leading and trailing Signal Channels THR2 in found signals", 200, 0.0,
-                                                   fLeadTrailMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_trail_thr3_diff",
-                                                   "Time Difference between leading and trailing Signal Channels THR3 in found signals", 200, 0.0,
-                                                   fLeadTrailMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("lead_trail_thr4_diff",
-                                                   "Time Difference between leading and trailing Signal Channels THR4 in found signals", 200, 0.0,
-                                                   fLeadTrailMaxTime),
-                                          "time diff [ps]", "Number of Signal Channels Pairs");
   // Per PM for calibration
-  getStatistics().createHistogramWithAxes(new TH2D("lead_thr1_thr2_diff_pm",
-                                                   "Time Difference between leading Signal Channels THR1 and THR2 in found signals per PM",
+  for (unsigned int thr = 1; thr <= kNumOfThresholds; thr++)
+  {
+    getStatistics().createHistogramWithAxes(new TH1D(Form("lead_trail_thr%d_diff", thr),
+                                                     Form("Time Difference between leading and trailing Signal Channels THR%d in found signals", thr),
+                                                     200, 0.0, fLeadTrailMaxTime),
+                                            "time diff [ps]", "Number of Signal Channels Pairs");
+
+    getStatistics().createHistogramWithAxes(new TH2D(Form("lead_trail_thr%d_diff_pm", thr),
+                                                    Form("Time Difference between leading and trailing Signal Channels THR%d in found signals per PM", thr),
+                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
+                                          "PM ID", "time diff [ps]");
+
+    for(unsigned int thr2 = thr + 1; thr2 <= kNumOfThresholds; thr2++)
+    {
+      getStatistics().createHistogramWithAxes(new TH1D(Form("lead_thr%d_thr%d_diff", thr, thr2),
+                                                       Form("Time Difference between leading Signal Channels THR%d and THR%d in found signals", thr, thr2),
+                                                       200, -fEdgeMaxTime, fEdgeMaxTime),
+                                              "time diff [ps]", "Number of Signal Channels Pairs");
+
+      getStatistics().createHistogramWithAxes(new TH2D(Form("lead_thr%d_thr%d_diff_pm", thr, thr2),
+                                                       Form("Time Difference between leading Signal Channels THR%d and THR%d in found signals per PM", thr, thr2),
                                                    maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, -fEdgeMaxTime, fEdgeMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_thr1_thr3_diff_pm",
-                                                   "Time Difference between leading Signal Channels THR1 and THR3 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, -fEdgeMaxTime, fEdgeMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_thr1_thr4_diff_pm",
-                                                   "Time Difference between leading Signal Channels THR1 and THR4 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, -fEdgeMaxTime, fEdgeMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_trail_thr1_diff_pm",
-                                                   "Time Difference between leading and trailing Signal Channels THR1 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_trail_thr2_diff_pm",
-                                                   "Time Difference between leading and trailing Signal Channels THR2 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_trail_thr3_diff_pm",
-                                                   "Time Difference between leading and trailing Signal Channels THR3 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
-                                          "PM ID", "time diff [ps]");
-
-  getStatistics().createHistogramWithAxes(new TH2D("lead_trail_thr4_diff_pm",
-                                                   "Time Difference between leading and trailing Signal Channels THR4 in found signals per PM",
-                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
-                                          "PM ID", "time diff [ps]");
+                                          "PM ID", "time diff [ps]");                                        
+    }
+  }
 }
