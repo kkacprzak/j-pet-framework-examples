@@ -18,7 +18,6 @@
 #include "Unpacker2/EventIII.h"
 #include "Unpacker2/TDCChannel.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
-// #include <JPetTaskIO/JPetInputHandlerHLD.h>
 #include <JPetWriter/JPetWriter.h>
 #include <Signals/JPetChannelSignal/JPetChannelSignal.h>
 
@@ -139,74 +138,6 @@ bool TimeWindowCreator::exec()
       saveChannelSignals(allChSigs);
     }
 
-    ///////////////////////////////////////////////////////////
-
-    // vector<JPetChannelSignal> allChannelSignals;
-    // unordered_map<int, vector<JPetChannelSignal>> singleChannelSignals;
-
-    // for (auto& endp_data : event->fOriginalData)
-    // {
-    //   unsigned int address = endp_data.first;
-    //
-    //   if (fChannelOffsets.count(address) == 0)
-    //   {
-    //     continue;
-    //   }
-    //   unsigned int channel_offset = fChannelOffsets.at(address);
-    //
-    //   std::vector<unpacker::hit_t>& data = endp_data.second;
-    //
-    //   for (auto& hit : data)
-    //   {
-    //     int channelNumber = channel_offset + hit.channel_id;
-    //
-    //     // Skip trigger signals - every 65th
-    //     if (channelNumber % 65 == 0)
-    //     {
-    //       continue;
-    //     }
-    //
-    //     // Skip if the channel number is absent in the configuration
-    //     if (getParamBank().getChannels().count(channelNumber) == 0)
-    //     {
-    //       if (fSaveControlHistos)
-    //       {
-    //         getStatistics().fillHistogram("wrong_channel", channelNumber);
-    //       }
-    //       continue;
-    //     }
-    //
-    //     auto& channel = getParamBank().getChannel(channelNumber);
-    //     double synchroOffset =
-    //         fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
-    //
-    //     // double time = hit.time / 1000.;
-    //     double time = hit.time;
-    //
-    //     // time = time - (fMaxTime - fMinTime);
-    //     // time *= -1.;
-    //
-    //     if (time < fMinTime || time > fMaxTime)
-    //     {
-    //       continue;
-    //     }
-    //
-    //     auto channelSignal = TimeWindowCreatorTools::generateChannelSignal(
-    //         time, channel, hit.is_falling_edge == 0 ? JPetChannelSignal::Leading : JPetChannelSignal::Trailing, synchroOffset);
-    //
-    //     singleChannelSignals[channel.getID()].push_back(channelSignal);
-    //   }
-    // }
-    //
-    // for (auto& chSigs : singleChannelSignals)
-    // {
-    //   TimeWindowCreatorTools::flagChannelSignals(chSigs.second, getStatistics(), fSaveControlHistos);
-    //   // Sort Signal Channels in time
-    //   TimeWindowCreatorTools::sortByTime(chSigs.second);
-    //   allChannelSignals.insert(allChannelSignals.end(), chSigs.second.begin(), chSigs.second.end());
-    // }
-    // // Save result
-    // saveChannelSignals(allChannelSignals);
   }
   else
   {
