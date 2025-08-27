@@ -295,12 +295,11 @@ BOOST_AUTO_TEST_CASE(createHit_test)
   BOOST_REQUIRE_CLOSE(hit.getTime(), 4.0 - 1.5, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getTimeDiff(), 4.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getToT(), 13.0, epsilon);
-  BOOST_REQUIRE_CLOSE(hit.getEnergy(), 13.0, epsilon);
-  // Before rotation (10.0, 10.0, 4*11/2 = 22.0)
-  // Rotation around Y axis by 90 degrees: x,y,z -> z,y,-x
-  BOOST_REQUIRE_CLOSE(hit.getPosX(), 22.0, epsilon);
+  // Energy set to 0 by default
+  BOOST_REQUIRE_CLOSE(hit.getEnergy(), 0.0, epsilon);
+  BOOST_REQUIRE_CLOSE(hit.getPosX(), 10.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getPosY(), 10.0, epsilon);
-  BOOST_REQUIRE_CLOSE(hit.getPosZ(), -10.0, epsilon);
+  BOOST_REQUIRE_CLOSE(hit.getPosZ(), 22.0, epsilon);
 
   BOOST_REQUIRE_CLOSE(hit.getQualityOfTime(), -1.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getQualityOfTimeDiff(), -1.0, epsilon);
@@ -348,8 +347,8 @@ BOOST_AUTO_TEST_CASE(createDummyHit_test)
 
   auto hit = HitFinderTools::createDummyHit(mtxSig);
   BOOST_REQUIRE_EQUAL(hit.getScin().getID(), 123);
-  BOOST_REQUIRE_CLOSE(hit.getSignalA().getTime(), 0.0, epsilon);
-  BOOST_REQUIRE_CLOSE(hit.getSignalB().getTime(), 2.0, epsilon);
+  BOOST_REQUIRE_CLOSE(hit.getSignalA().getTime(), 2.0, epsilon);
+  BOOST_REQUIRE_CLOSE(hit.getSignalB().getTime(), 0.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getTime(), 2.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getTimeDiff(), 0.0, epsilon);
   BOOST_REQUIRE_CLOSE(hit.getToT(), 13.0, epsilon);
