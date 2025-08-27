@@ -22,22 +22,22 @@ using FunctionLimits = std::pair<double, double>;
 using FunctionParams = std::vector<double>;
 using FuncParamsAndLimits = std::pair<FunctionFormula, std::pair<FunctionParams, FunctionLimits>>;
 
-namespace tot_energy_converter {
-
-ToTEnergyConverter::ToTEnergyConverter(const ToTEParams& params, const ToTERange range) : fFunction(params, range) {}
-
-double ToTEnergyConverter::operator()(double x) const { return fFunction(x); }
-
-std::pair<double, double> ToTEnergyConverter::getRange() const { return {fFunction.getRange().fMin, fFunction.getRange().fMax }; }
-
-ToTEnergyConverter generateToTEnergyConverter(const FuncParamsAndLimits& formula)
+namespace tot_energy_converter 
 {
-  auto func = formula.first;
-  auto funcParams = formula.second.first;
-  auto funcLimits = formula.second.second;
+  ToTEnergyConverter::ToTEnergyConverter(const ToTEParams& params, const ToTERange range) : fFunction(params, range) {}
 
-  JPetCachedFunctionParams params(func, funcParams);
-  ToTEnergyConverter conv(params, Range(100000, funcLimits.first, funcLimits.second));
-  return conv;
-}
+  double ToTEnergyConverter::operator()(double x) const { return fFunction(x); }
+
+  std::pair<double, double> ToTEnergyConverter::getRange() const { return {fFunction.getRange().fMin, fFunction.getRange().fMax }; }
+
+  ToTEnergyConverter generateToTEnergyConverter(const FuncParamsAndLimits& formula)
+  {
+    auto func = formula.first;
+    auto funcParams = formula.second.first;
+    auto funcLimits = formula.second.second;
+
+    JPetCachedFunctionParams params(func, funcParams);
+    ToTEnergyConverter conv(params, Range(100000, funcLimits.first, funcLimits.second));
+    return conv;
+  }
 }

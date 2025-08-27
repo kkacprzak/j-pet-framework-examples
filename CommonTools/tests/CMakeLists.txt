@@ -10,6 +10,8 @@ set(UNIT_TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformerToolsTest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/HitFinderToolsTest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerToolsTest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterTest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactoryTest.cpp
 )
 
 # Configure Boost
@@ -50,7 +52,7 @@ add_custom_target(
 
 foreach(test_source IN ITEMS ${UNIT_TEST_SOURCES})
   get_filename_component(test ${test_source} NAME_WE)
-  package_add_test(${test} ${test_source})
+  package_add_test(${test} ${test_source} ../ToTEnergyConverter.cpp)
   list(APPEND tests_names ${test}.x)
 endforeach()
 

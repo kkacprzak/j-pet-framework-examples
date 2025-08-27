@@ -132,7 +132,6 @@ vector<JPetMatrixSignal> SignalTransformerTools::mergePMSignalsOnSide(vector<JPe
       }
     }
 
-    // mtxSig.setToT(calculateAverageToT(mtxSig));
     mtxSig.setTime(calculateAverageTime(mtxSig, calibTree));
     pmSigVec.erase(pmSigVec.begin());
     mtxSigVec.push_back(mtxSig);

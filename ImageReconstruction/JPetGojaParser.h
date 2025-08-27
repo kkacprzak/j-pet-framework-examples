@@ -16,12 +16,6 @@
 #ifndef JPETGOJAPARSER_H
 #define JPETGOJAPARSER_H
 
-#ifdef __CINT__
-// when cint is used instead of compiler, override word is not recognized
-// nevertheless it's needed for checking if the structure of project is correct
-#define override
-#endif
-
 #include "JPetUserTask/JPetUserTask.h"
 #include <memory>
 
@@ -53,4 +47,4 @@ private:
   std::string fInputFilePath = "";
 };
 
-#endif /*  !JPETGOJAPARSER_H */
+#endif /* !JPETGOJAPARSER_H */

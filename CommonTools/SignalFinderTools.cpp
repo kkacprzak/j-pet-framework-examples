@@ -122,7 +122,7 @@ vector<JPetPMSignal> SignalFinderTools::buildPMSignals(const vector<JPetChannelS
   }
 
   assert(leadChSigs.size() > 0);
-  for(int jj = 0; jj < leadChSigs.size(); jj++)
+  for(unsigned int jj = 0; jj < leadChSigs.size(); jj++)
   {  
     while (leadChSigs.at(jj).size() > 0)
     {
