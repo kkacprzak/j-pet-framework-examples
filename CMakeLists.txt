@@ -14,15 +14,14 @@ else()
     cmake_policy(VERSION 3.14)
 endif()
 
-project(JPetFrameworkExamples VERSION 1.0.0
-                  LANGUAGES CXX)
+project(JPetFrameworkExamples VERSION 8.0.0 LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "JPetFrameworkExamples module")
 
 message(STATUS "")
 message(STATUS "    == ${PROJECT_NAME} Project configuration ==")
 message(STATUS "")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
@@ -150,30 +149,29 @@ endif(JPetFramework_FOUND)
 ## Download input and configuration files
 ## The script shouldn't do anything if the data is present and correct.
 
-#### TODO prepare v11 files to download
-#option(DOWNLOAD_DATA "Download data" ON)
-#if(DOWNLOAD_DATA)
-  #set(DOWNLOAD_BASE_PATH ${PROJECT_SOURCE_DIR})
+option(DOWNLOAD_DATA "Download data" ON)
+if(DOWNLOAD_DATA)
+  set(DOWNLOAD_BASE_PATH ${PROJECT_SOURCE_DIR})
 
-  #file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples_reformed.sha" ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
-  #file(READ ${DOWNLOAD_BASE_PATH}/examples_reformed.sha SHA_HASHES)
-  #string(REGEX REPLACE "\n" ";" SHA_HASHES "${SHA_HASHES}") #create cmake array from hash + file path
-  #foreach(SHA_HASH ${SHA_HASHES})
-  #  string(REGEX REPLACE "  " ";" SHA_HASH "${SHA_HASH}") #Split hash and file path
-  #  list(GET SHA_HASH 0 SHA256) #get sha hash
-  #  list(GET SHA_HASH 1 PATH) #get file path
-  #  string(REPLACE "ExamplesReformed/" "" SAVE_PATH ${PATH})
+  file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples.sha" ${DOWNLOAD_BASE_PATH}/examples.sha)
+  file(READ ${DOWNLOAD_BASE_PATH}/examples.sha SHA_HASHES)
+  string(REGEX REPLACE "\n" ";" SHA_HASHES "${SHA_HASHES}") #create cmake array from hash + file path
+  foreach(SHA_HASH ${SHA_HASHES})
+    string(REGEX REPLACE "  " ";" SHA_HASH "${SHA_HASH}") #Split hash and file path
+    list(GET SHA_HASH 0 SHA256) #get sha hash
+    list(GET SHA_HASH 1 PATH) #get file path
+    string(REPLACE "Examples/" "" SAVE_PATH ${PATH})
 
-  #  if(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
-  #    file(SHA256 ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} CURRENT_SHA256)
-  #  endif(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
-  #  if(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
-  #    message(STATUS "SHA value of ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} to not match! Downloading file..")
-  #    file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/${PATH}" ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} EXPECTED_HASH SHA256=${SHA256})
-  #  endif(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
-  #endforeach(SHA_HASH ${SHA_HASHES})
-  #file(REMOVE ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
-#endif()
+    if(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
+      file(SHA256 ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} CURRENT_SHA256)
+    endif(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
+    if(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
+      message(STATUS "SHA value of ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} to not match! Downloading file..")
+      file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/${PATH}" ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} EXPECTED_HASH SHA256=${SHA256})
+    endif(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
+  endforeach(SHA_HASH ${SHA_HASHES})
+  file(REMOVE ${DOWNLOAD_BASE_PATH}/examples.sha)
+endif()
 
 ################################################################################
 ## Directories with examples
@@ -184,7 +182,8 @@ add_subdirectory(MCAnalysis)
 add_subdirectory(ListmodeExport)
 add_subdirectory(NTupleExport)
 add_subdirectory(NTupleAnalysis)
-#add_subdirectory(UserDataClassExample)
+add_subdirectory(UserDataClassExample)
+add_subdirectory(ImageReconstruction)
 
 ################################################################################
 ## Unit tests

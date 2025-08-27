@@ -27,7 +27,7 @@
  * with the assumption that TOF error = 0. Before reconstructruction, the data are not preselected
  * it should be preselected using FilterEvents Task.
  * The point of annihilation is reconstructed for all combination of registered hits in given events.
- * Additional optional options:
+ * Additional options:
  * - ImageReco_Annihilation_Point_Z_float
  * - ImageReco_Xrange_On_3D_Histogram_int
  * - ImageReco_Yrange_On_3D_Histogram_int
@@ -56,7 +56,6 @@ private:
   * else:
   * TOF = ((hit2.timeA + hit2.timeB) / 2.0) - ((hit1.timeA + hit1.timeB) / 2.0) * 30
   */
-  bool calculateAnnihilationPoint(const JPetHit& firstHit, const JPetHit& secondHit);
   void setUpOptions();
 
   const std::string kCutOnAnnihilationPointZKey = "ImageReco_Annihilation_Point_Z_float";

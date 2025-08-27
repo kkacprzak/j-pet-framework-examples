@@ -15,9 +15,11 @@
  */
 
 #include "ImageReco.h"
+#include "../CommonTools/EventCategorizerTools.h"
 #include <TH3D.h>
 #include <TH1I.h>
 #include "./JPetOptionsTools/JPetOptionsTools.h"
+
 using namespace jpet_options_tools;
 
 ImageReco::ImageReco(const char *name) : JPetUserTask(name) {}
@@ -42,7 +44,7 @@ bool ImageReco::init()
                                            "Annihilation point Z",
                                            fZRange, -fZRange, fZRange));
 
-  getStatistics().createHistogram(new TH1D("annihilation_point_z_cutted",
+  getStatistics().createHistogram(new TH1D("annihilation_point_z_cut",
                                            "Annihilation point Z",
                                            fZRange, -fZRange, fZRange));
 
@@ -66,7 +68,20 @@ bool ImageReco::exec()
         auto hits = event.getHits();
         for (unsigned int i = 0; i < hits.size() - 1; i++)
         {
-          calculateAnnihilationPoint(hits[i], hits[i + 1]);
+          auto firstHit = dynamic_cast<const JPetPhysRecoHit*>(event.getHits().at(i));
+          auto secondHit = dynamic_cast<const JPetPhysRecoHit*>(event.getHits().at(i + 1));
+          
+          auto annhilationPoint = EventCategorizerTools::calculateAnnihilationPoint(firstHit, secondHit);
+          getStatistics().getObject<TH1D>("annihilation_point_z")->Fill(annhilationPoint.Z());
+
+          if (annhilationPoint.Z() > -fANNIHILATION_POINT_Z && annhilationPoint.Z() < fANNIHILATION_POINT_Z)
+          {
+            getStatistics().getObject<TH3D>("hits_pos")->Fill(annhilationPoint.X(), annhilationPoint.Y(), annhilationPoint.Z());
+          }    
+          else
+          {
+            getStatistics().getObject<TH1D>("annihilation_point_z_cut")->Fill(annhilationPoint.Z());
+          }
         }
       }
     }
@@ -82,58 +97,6 @@ bool ImageReco::exec()
 bool ImageReco::terminate()
 {
   return true;
-}
-
-bool ImageReco::calculateAnnihilationPoint(const JPetHit &firstHit, const JPetHit &secondHit)
-{
-  double s1_x = static_cast<double>(firstHit.getPosX());
-  double s1_y = static_cast<double>(firstHit.getPosY());
-
-  double s2_x = static_cast<double>(secondHit.getPosX());
-  double s2_y = static_cast<double>(secondHit.getPosY());
-
-  double s1_a = static_cast<double>(firstHit.getSignalA().getTime()) / 1000.; // convert ps to ns
-  double s1_b = static_cast<double>(firstHit.getSignalB().getTime()) / 1000.;
-
-  double s2_a = static_cast<double>(secondHit.getSignalA().getTime()) / 1000.;
-  double s2_b = static_cast<double>(secondHit.getSignalB().getTime()) / 1000.;
-
-  double t_s1_ab = s1_a - s1_b;
-  double t_s2_ab = s2_a - s2_b;
-
-  double s1_z = (t_s1_ab * 11.) / 2.0;
-  double s2_z = (t_s2_ab * 11.) / 2.0;
-
-  double vdx = s2_x - s1_x;
-  double vdy = s2_y - s1_y;
-  double vdz = s2_z - s1_z;
-
-  double dd = std::sqrt((vdx * vdx) + (vdz * vdz) + (vdy * vdy));
-
-  double mtof_a = 0.;
-  if (s1_y > s2_y)
-  {
-    mtof_a = ((((s1_a + s1_b) / 2.0) - ((s2_a + s2_b) / 2.0)) * 30.);
-  }
-  else
-  {
-    mtof_a = ((((s2_a + s2_b) / 2.0) - ((s1_a + s1_b) / 2.0)) * 30.);
-  }
-  double x = 0., y = 0., z = 0.;
-  x = s1_x + ((vdx / 2.0) + (vdx / dd * mtof_a));
-  y = s1_y + ((vdy / 2.0) + (vdy / dd * mtof_a));
-  z = s1_z + ((vdz / 2.0) + (vdz / dd * mtof_a));
-  getStatistics().getObject<TH1D>("annihilation_point_z")->Fill(z);
-  if (z > -fANNIHILATION_POINT_Z && z < fANNIHILATION_POINT_Z)
-  {
-    getStatistics().getObject<TH3D>("hits_pos")->Fill(x, y, z);
-    return true;
-  }
-  else
-  {
-    getStatistics().getObject<TH1D>("annihilation_point_z_cutted")->Fill(z);
-  }
-  return false;
 }
 
 void ImageReco::setUpOptions()

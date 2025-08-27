@@ -33,7 +33,7 @@ int main(int argc, const char* argv[])
     manager.registerTask<SinogramCreator>("SinogramCreator");
     manager.registerTask<ReconstructionTask>("ReconstructionTask");
 
-    // manager.useTask("FilterEvents", "unk.evt", "reco.unk.evt");
+    manager.useTask("FilterEvents", "unk.evt", "reco.unk.evt");
     // manager.useTask("MLEMRunner", "reco.unk.evt", "");
     // manager.useTask("ImageReco", "reco.unk.evt", "reco");
     // manager.useTask("SinogramCreator", "reco.unk.evt", "sino");

@@ -50,7 +50,7 @@ set(HEADERS ../ModularDetectorAnalysis/EventCategorizer.h
             ../ModularDetectorAnalysis/SignalFinder.h
             ../CommonTools/SignalFinderTools.h
             ../ModularDetectorAnalysis/SignalTransformer.h
-            ../ModularDetectorAnalysis/SignalTransformerTools.h
+            ../CommonTools/SignalTransformerTools.h
             ../ModularDetectorAnalysis/TimeWindowCreator.h
             ../CommonTools/TimeWindowCreatorTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/LORFinder.h
@@ -67,7 +67,7 @@ set(SOURCES ../ModularDetectorAnalysis/EventCategorizer.cpp
             ../ModularDetectorAnalysis/SignalFinder.cpp
             ../CommonTools/SignalFinderTools.cpp
             ../ModularDetectorAnalysis/SignalTransformer.cpp
-            ../ModularDetectorAnalysis/SignalTransformerTools.cpp
+            ../CommonTools/SignalTransformerTools.cpp
             ../ModularDetectorAnalysis/TimeWindowCreator.cpp
             ../CommonTools/TimeWindowCreatorTools.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/LORFinder.cpp

@@ -31,7 +31,8 @@ set(AUXILIARY_FILES
 set(projectBinary ${projectName}.x)
 project(${projectName} CXX)
 
-set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/FilterEvents.h
+set(HEADERS ../CommonTools/EventCategorizerTools.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/FilterEvents.h
             ${CMAKE_CURRENT_SOURCE_DIR}/ImageReco.h
             ${CMAKE_CURRENT_SOURCE_DIR}/MLEMRunner.h
             ${CMAKE_CURRENT_SOURCE_DIR}/SinogramCreator.h
@@ -39,7 +40,8 @@ set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/FilterEvents.h
             ${CMAKE_CURRENT_SOURCE_DIR}/SinogramCreatorTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../j-pet-mlem/src/util/png_writer.h)
 
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/FilterEvents.cpp
+set(SOURCES ../CommonTools/EventCategorizerTools.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/FilterEvents.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/ImageReco.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/MLEMRunner.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/SinogramCreator.cpp

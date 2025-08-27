@@ -16,8 +16,7 @@
 #include "MLEMRunner.h"
 #include "2d/gate/gate_scanner_builder.h"
 #include "2d/gate/gate_volume_builder.h"
-#include "JPetGeomMapping/JPetGeomMapping.h"
-#include "JPetHit/JPetHit.h"
+#include "Hits/JPetBaseHit/JPetBaseHit.h"
 #include "JPetParamBank/JPetParamBank.h"
 #include <iomanip> //std::setprecision
 
@@ -77,15 +76,15 @@ bool MLEMRunner::parseEvent(const JPetEvent& event)
   if (hits.size() != 2) {
     return false;
   }
-  const float x1 = hits[0].getPosX();
-  const float y1 = hits[0].getPosY();
-  float z1 = hits[0].getPosZ();
-  float t1 = hits[0].getTime();
+  const float x1 = hits[0]->getPosX();
+  const float y1 = hits[0]->getPosY();
+  float z1 = hits[0]->getPosZ();
+  float t1 = hits[0]->getTime();
 
-  const float x2 = hits[1].getPosX();
-  const float y2 = hits[1].getPosY();
-  float z2 = hits[1].getPosZ();
-  float t2 = hits[1].getTime();
+  const float x2 = hits[1]->getPosX();
+  const float y2 = hits[1]->getPosY();
+  float z2 = hits[1]->getPosZ();
+  float t2 = hits[1]->getTime();
 
   if (std::abs(z1 * kCentimetersToMeters) > fHalfStripLenght || std::abs(z2 * kCentimetersToMeters) > fHalfStripLenght) {
     return false;
@@ -132,27 +131,33 @@ void MLEMRunner::setUpOptions()
   const std::vector<float> rotation{0.f, 0.5f, 0.5f}; // rotation for BigBarrel
 
   const JPetParamBank& bank = getParamBank();
-  const JPetGeomMapping mapping(bank);
-  for (unsigned int i = 1; i < mapping.getLayersCount(); i++) {
-    radius.push_back(mapping.getRadiusOfLayer(i) * kCentimetersToMeters);
-    scintillators.push_back(static_cast<int>(mapping.getSlotsCount(i)));
+  for (unsigned int i = 1; i < bank.getLayersSize(); i++) {
+    radius.push_back(bank.getLayer(i).getRadius() * kCentimetersToMeters);
+    int scinCount = 0;
+    for(auto scin : bank.getScins())
+    {
+      if(scin.second->getSlot().getLayer().getID() == bank.getLayer(i).getID())
+        scinCount++;
+    }
+    scintillators.push_back(scinCount);
   }
 
-  const auto scin = bank.getScintillator(1);
+  const auto scin = bank.getScin(1);
 
-  const float detectorWidth = scin.getScinSize(JPetScin::Dimension::kWidth);
-  const float detectorHeight = scin.getScinSize(JPetScin::Dimension::kHeight);
-  fHalfStripLenght = scin.getScinSize(JPetScin::Dimension::kLength) / 2.f;
+  const float detectorWidth = scin.getWidth();
+  const float detectorHeight = scin.getHeight();
+  fHalfStripLenght = scin.getLength() / 2.f;
   const float detectorD = 0.f;
   const float fowRadius = 0.4f;
 
-  fScanner = ScannerBuilder<SquareScanner>::build_multiple_rings(__PET2D_BARREL(radius,         // radius
-             rotation,       // rotation
-             scintillators,  // n-detectors
-             detectorWidth,  // w-detector
-             detectorHeight, // h-detector
-             detectorD,      // should be d-detector
-             fowRadius       // fow radius
+  fScanner = ScannerBuilder<SquareScanner>::build_multiple_rings(__PET2D_BARREL(
+            radius,         // radius
+            rotation,       // rotation
+            scintillators,  // n-detectors
+            detectorWidth,  // w-detector
+            detectorHeight, // h-detector
+            detectorD,      // should be d-detector
+            fowRadius       // fow radius
                                                                                ));
 
   if (isOptionSet(opts, kNumberOfPixelsInOneDimensionKey)) {
@@ -209,7 +214,7 @@ void MLEMRunner::setSystemMatrix()
   util::ibstream matrixStream(fSystemMatrixOutputPath);
   if (matrixStream.good()) {
     fMatrix = new SquareMatrix(matrixStream);
-    if (fMatrix->n_emissions() != static_cast<int>(fNumberOfEmissionsPerPixel)) { // check is readed system matrix have desire number of emissions
+    if (fMatrix->n_emissions() != static_cast<int>(fNumberOfEmissionsPerPixel)) { // check if read system matrix have desired number of emissions
       delete fMatrix;
       fMatrix = new SquareMatrix(runGenerateSystemMatrix()); // if not rerun generation of system matrix
     }

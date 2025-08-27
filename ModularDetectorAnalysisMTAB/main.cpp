@@ -39,16 +39,16 @@ int main(int argc, const char* argv[])
     manager.registerTask<SignalFinder>("SignalFinder");
     manager.registerTask<HitFinder>("HitFinder");
     manager.registerTask<EventFinder>("EventFinder");
-    // manager.registerTask<Downscaler>("Downscaler");
-    // manager.registerTask<EventCategorizer>("EventCategorizer");
+    manager.registerTask<Downscaler>("Downscaler");
+    manager.registerTask<EventCategorizer>("EventCategorizer");
     // manager.registerTask<NTupler>("NTupler");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot");
     manager.useTask("SignalFinder", "tslot", "pm.sig");
     manager.useTask("HitFinder", "pm.sig", "hits");
     manager.useTask("EventFinder", "hits", "unk.evt");
-    // manager.useTask("Downscaler", "unk.evt", "pre.evt");
-    // manager.useTask("EventCategorizer", "pre.evt", "cat.evt");
+    manager.useTask("Downscaler", "unk.evt", "pre.evt");
+    manager.useTask("EventCategorizer", "pre.evt", "cat.evt");
     // manager.useTask("NTupler", "cat.evt", "histo.evt");
 
     manager.run(argc, argv);
