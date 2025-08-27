@@ -42,6 +42,8 @@ public:
   virtual bool exec() override;
   virtual bool terminate() override;
 
+  void PlotTDiffAB(JPetHit Hit);
+  
 protected:
   std::vector<JPetEvent> buildEvents(const JPetTimeWindow& hits);
   void saveEvents(const std::vector<JPetEvent>& event);

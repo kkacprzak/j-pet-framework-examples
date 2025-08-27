@@ -48,6 +48,7 @@ set(HEADERS
             ../CommonTools/CalibrationTools.h
             ../CommonTools/ToTEnergyConverter.h
             ../CommonTools/ToTEnergyConverterFactory.h
+            ../CommonTools/Downscaler.h
             )
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -65,6 +66,7 @@ set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
             ../CommonTools/CalibrationTools.cpp
             ../CommonTools/ToTEnergyConverter.cpp
             ../CommonTools/ToTEnergyConverterFactory.cpp
+            ../CommonTools/Downscaler.cpp
             )
 
 
