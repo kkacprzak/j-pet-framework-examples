@@ -56,8 +56,6 @@ protected:
   bool fSaveControlHistos = true;
   double fMinTime = 0.0;
   double fMaxTime = 1.e6;
-  // Number for scaling some histograms, so they are not reaching their memory capacity
-  double fScalingFactor = 0.0001;
 
   std::map<std::uint32_t, int> fChannelOffsets;
 };

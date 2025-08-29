@@ -3,7 +3,7 @@
 ## Created by J-PET Framework developers 2016-2020
 ##
 ## Description:
-##   Data reconstruction in Modular J-PET Detector
+##   Data export to Listmode
 ################################################################################
 
 cmake_minimum_required(VERSION 3.1...3.14)
@@ -30,10 +30,6 @@ set(AUXILLIARY_FILES
 ## Binary, header and source files definitions
 set(projectBinary ${projectName}.x)
 project(${projectName} CXX) # using only C++
-
-## Name your header files with .h extension and source files with .cpp
-#file(GLOB HEADERS *.h)
-#file(GLOB SOURCES *.cpp)
 
 ######################################################################
 ## Using source files of modules from ModularDetectorAnalysis

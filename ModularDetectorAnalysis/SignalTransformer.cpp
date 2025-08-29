@@ -134,7 +134,6 @@ void SignalTransformer::saveMatrixSignals(const std::vector<JPetMatrixSignal>& m
       auto sigMap = mtxSig.getPMSignals();
       if (sigMap.find(1) != sigMap.end())
       {
-        // auto t_1_1 = sigMap.at(1).getPoints(JPetSigCh::Leading, JPetPMSignal::ByThrNum).at(0).getTime();
         auto t_1_1 = sigMap.at(1).getLeadTrailPairs().at(0).first.getTime();
 
         for (auto pmSig : sigMap)

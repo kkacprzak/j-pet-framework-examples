@@ -211,28 +211,10 @@ bool EventAnalyzer::exec()
           if (mcHit1.getGammaTag() == 3 && mcHit2.getGammaTag() == 3 && mcHit3.getGammaTag() == 3)
           {
             auto apPosMC = EventCategorizerTools::calculateAnnihilationPointByMinimization(mcHit1, mcHit2, mcHit3);
-            // auto apTimePosMC = EventCategorizerTools::calculateAnnihilationPointAndTimeByTrilateration(mcHit1, mcHit2, mcHit3);
             auto apPosReco = EventCategorizerTools::calculateAnnihilationPointByMinimization(*recoHit1, *recoHit2, *recoHit3);
-            // auto apTimePosReco = EventCategorizerTools::calculateAnnihilationPointAndTimeByTrilateration(*recoHit1, *recoHit2, *recoHit3);
 
             if (fSaveControlHistos)
             {
-              // getStatistics().fillHistogram("3g_ap_xy_mc", apTimePosMC.second.X(), apTimePosMC.second.Y());
-              // getStatistics().fillHistogram("3g_ap_zx_mc", apTimePosMC.second.Z(), apTimePosMC.second.X());
-              // getStatistics().fillHistogram("3g_ap_zy_mc", apTimePosMC.second.Z(), apTimePosMC.second.Y());
-
-              // getStatistics().fillHistogram("3g_ap_xy_mc_zoom", apTimePosMC.second.X(), apTimePosMC.second.Y());
-              // getStatistics().fillHistogram("3g_ap_zx_mc_zoom", apTimePosMC.second.Z(), apTimePosMC.second.X());
-              // getStatistics().fillHistogram("3g_ap_zy_mc_zoom", apTimePosMC.second.Z(), apTimePosMC.second.Y());
-
-              // getStatistics().fillHistogram("3g_ap_xy_reco", apTimePosReco.second.X(), apTimePosReco.second.Y());
-              // getStatistics().fillHistogram("3g_ap_zx_reco", apTimePosReco.second.Z(), apTimePosReco.second.X());
-              // getStatistics().fillHistogram("3g_ap_zy_reco", apTimePosReco.second.Z(), apTimePosReco.second.Y());
-
-              // getStatistics().fillHistogram("3g_ap_xy_reco_zoom", apTimePosReco.second.X(), apTimePosReco.second.Y());
-              // getStatistics().fillHistogram("3g_ap_zx_reco_zoom", apTimePosReco.second.Z(), apTimePosReco.second.X());
-              // getStatistics().fillHistogram("3g_ap_zy_reco_zoom", apTimePosReco.second.Z(), apTimePosReco.second.Y());
-
               getStatistics().fillHistogram("3g_ap_xy_mc", apPosMC.X(), apPosMC.Y());
               getStatistics().fillHistogram("3g_ap_zx_mc", apPosMC.Z(), apPosMC.X());
               getStatistics().fillHistogram("3g_ap_zy_mc", apPosMC.Z(), apPosMC.Y());

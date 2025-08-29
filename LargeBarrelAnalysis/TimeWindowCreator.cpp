@@ -22,9 +22,7 @@
 #include <Signals/JPetChannelSignal/JPetChannelSignal.h>
 
 #include <boost/property_tree/json_parser.hpp>
-
 #include <iostream>
-// #include <unpacker_types.hpp>
 #include <utility>
 
 using namespace jpet_options_tools;
@@ -76,7 +74,6 @@ bool TimeWindowCreator::init()
   for (auto& dm : getParamBank().getDataModules())
   {
     fChannelOffsets[dm.second->getTBRNetAddress()] = dm.second->getChannelsOffset();
-    // std::cout << "Address: " << std::hex << dm.second->getTBRNetAddress() << " Offset: " << dm.second->getChannelsOffset() << std::endl;
   }
 
   // Control histograms
@@ -89,7 +86,6 @@ bool TimeWindowCreator::init()
 
 bool TimeWindowCreator::exec()
 {
-  // if (auto event = dynamic_cast<JPetHLDdata* const>(fEvent))
   if (auto event = dynamic_cast<EventIII* const>(fEvent))
   {
     int numTDCChannels = event->GetTotalNTDCChannels();
@@ -154,10 +150,10 @@ bool TimeWindowCreator::terminate()
 
 void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& channelSigVec)
 {
-  // if (fSaveControlHistos)
-  // {
-  //   getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
-  // }
+  if (fSaveControlHistos)
+  {
+    getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
+  }
 
   for (auto& channelSig : channelSigVec)
   {
@@ -167,11 +163,8 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
       getStatistics().fillHistogram("chsig_time", channelSig.getTime());
       getStatistics().fillHistogram("channel_occ", channelSig.getChannel().getID());
 
-      // if (channelSig.getEdgeType() == JPetChannelSignal::Leading)
-      // {
       getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
       getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
-      // }
 
       if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
       {

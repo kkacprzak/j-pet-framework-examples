@@ -32,11 +32,7 @@ set(projectBinary ${projectName}.x)
 project(${projectName} CXX) # using only C++
 
 ######################################################################
-## If you are using your own version of some module which is also present
-## in LargeBarrelAnalysis, comment out the respective lines below
-## so as not to use this module's source from LargeBarrelAnalysis.
-## (please remove this comment in your template-derived analysis)
-## Add your own HEADERS/SOURCES
+## Add HEADERS/SOURCES
 set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/NTupler.h)
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

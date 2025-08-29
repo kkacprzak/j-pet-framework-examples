@@ -127,9 +127,6 @@ bool TimeWindowCreator::exec()
 
         double time = hit.time / 1000.;
 
-        // time = time - (fMaxTime - fMinTime);
-        // time *= -1.;
-
         if (time < fMinTime || time > fMaxTime)
         {
           continue;
@@ -186,8 +183,6 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 
       if (fSaveControlHistos)
       {
-        // if (gRandom->Uniform() < fScalingFactor)
-        // {
         getStatistics().fillHistogram("chsig_time", channelSig.getTime());
         getStatistics().fillHistogram("occ_channels", channelSig.getChannel().getID());
 
@@ -206,7 +201,6 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
         {
           getStatistics().fillHistogram("reco_flags_chsig", 3);
         }
-        // }
 
         if (channelSig.getEdgeType() == JPetChannelSignal::Leading && channelSig.getChannel().getThresholdNumber() == 1)
         {

@@ -13,7 +13,6 @@
  *  @file main.cpp
  */
 
-#include "../NTupleExport/NTupler.h"
 #include "EventAnalyzer.h"
 #include "EventFinderMC.h"
 #include <JPetManager/JPetManager.h>
@@ -28,11 +27,9 @@ int main(int argc, const char* argv[])
 
     manager.registerTask<EventFinderMC>("EventFinderMC");
     manager.registerTask<EventAnalyzer>("EventAnalyzer");
-    // manager.registerTask<NTupler>("NTupler");
 
     manager.useTask("EventFinderMC", "hits", "mc.evt");
     manager.useTask("EventAnalyzer", "mc.evt", "ana.evt");
-    // manager.useTask("NTupler", "unk.evt", "histo.evt");
 
     manager.run(argc, argv);
   }
