@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,14 +28,15 @@ jobs:
 
     - name: download  ROOT (for ubuntu-24.04)
       run: |
-        wget https://root.cern/download/root_v6.32.02.Linux-ubuntu24.04-x86_64-gcc13.2.tar.gz
-        tar xzf root_v6.32.02.Linux-ubuntu24.04-x86_64-gcc13.2.tar.gz
-      if: matrix.os == 'ubuntu-18.04'
+        sudo apt-get install libvdt-dev
+        wget https://root.cern/download/root_v6.36.04.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
+        tar xzf root_v6.36.04.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
+      if: matrix.os == 'ubuntu-24.04'
 
     - name: download  ROOT (for ubuntu 22.04)
       run: |
         wget https://root.cern/download/root_v6.30.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
-        tar xzf root_v6.26.02.Linux-ubuntu22-x86_64-gcc11.2.tar.gz
+        tar xzf root_v6.30.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
       if: matrix.os == 'ubuntu-22.04'
 
     - name: download  ROOT (for ubuntu 20.04)
