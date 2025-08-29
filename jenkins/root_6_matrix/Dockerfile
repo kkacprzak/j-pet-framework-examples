@@ -27,7 +27,7 @@ RUN apt-get update \
   python-dev \
   sudo \
   doxygen \
-  libfftw3-3 \
+  # libfftw3-3 \
   libfftw3-dev \
   file \
   wget \

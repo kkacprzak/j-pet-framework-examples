@@ -16,9 +16,9 @@ jobs:
     - name: system update
       run: |
        sudo apt-get -qq update
-       sudo apt-get install -y git libboost-all-dev libtbb-dev cmake libfftw3-dev sshpass
+       sudo apt-get install -y git libboost-all-dev libtbb-dev cmake libfftw3-dev sshpass nlohmann-json3-dev
       #  libfftw3-3
-      
+
     - name: set branch name
       run: |
         echo "GITHUB_REF=${GITHUB_REF}"
