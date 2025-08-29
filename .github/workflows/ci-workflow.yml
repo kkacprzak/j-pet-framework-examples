@@ -16,8 +16,9 @@ jobs:
     - name: system update
       run: |
        sudo apt-get -qq update
-       sudo apt-get install -y git libboost-all-dev libtbb-dev cmake libfftw3-3 libfftw3-dev sshpass
-
+       sudo apt-get install -y git libboost-all-dev libtbb-dev cmake libfftw3-dev sshpass
+      #  libfftw3-3
+      
     - name: set branch name
       run: |
         echo "GITHUB_REF=${GITHUB_REF}"
@@ -48,7 +49,6 @@ jobs:
     - name: build j-pet framework
       run: |
         source root/bin/thisroot.sh
-        source unpacker/build/bin/thisunpacker.sh
         rm -rf j-pet-framework || true
         git clone --single-branch --branch ${BRANCH} https://github.com/JPETTomography/j-pet-framework.git
         mkdir -p j-pet-framework/build
