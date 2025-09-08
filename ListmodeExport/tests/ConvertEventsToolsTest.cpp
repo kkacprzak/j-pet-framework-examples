@@ -14,21 +14,21 @@
  */
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE EventCategorizerToolsTools
+#define BOOST_TEST_MODULE ConvertEventsTools
 
 #include "../ConvertEventsTools.h"
 #include <boost/test/unit_test.hpp>
 
 auto epsilon = 0.0001;
 
-BOOST_AUTO_TEST_SUITE(EventCategorizerToolsTestSuite)
+BOOST_AUTO_TEST_SUITE(ConvertEventsToolsTestSuite)
 
 BOOST_AUTO_TEST_CASE(readLUTFile_test)
 {
   // TODO put the LUT file in unit test files
-  std::string lutFileName = "../scripts/test_conversion.lut";
-  auto lutGeom = ConvertEventsTools::readLUTFile(lutFileName, 40);
-  BOOST_REQUIRE_EQUAL(lutGeom.size(), 40);
+  std::string lutFileName = "unitTestData/ListmodeExport/testFile.lut";
+  auto lutGeom = ConvertEventsTools::readLUTFile(lutFileName, 2600);
+  BOOST_REQUIRE_EQUAL(lutGeom.size(), 2600);
 }
 
 BOOST_AUTO_TEST_CASE(getCrystalID_test)

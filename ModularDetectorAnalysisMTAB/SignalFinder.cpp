@@ -181,12 +181,30 @@ void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
 
     JPetMatrixSignal mtxSig;
     mtxSig.setMatrix(pmSig.getPM().getMatrix());
-    mtxSig.setTime(pmSig.getTime());
     if (!mtxSig.addPMSignal(pmSig))
     {
       ERROR("Problem with adding the first signal to new matrix signal object.");
       break;
     }
+
+    // Applying b-side correction for A-B time difference synchronization
+    auto scinID = mtxSig.getMatrix().getScin().getID();
+    double bCorrection = 0.0;
+    if (mtxSig.getMatrix().getSide() == JPetMatrix::SideB)
+    {
+      bCorrection = fConstansTree.get("scin." + to_string(scinID) + ".b_correction", 0.0);
+    }
+
+    // Applying time walk correction
+    double timeWalkCorrection = 0.0;
+    auto tot = mtxSig.getToT();
+    if (tot != 0.0)
+    {
+      auto p1 = fConstansTree.get("scin." + to_string(scinID) + ".time_walk_a", 0.0);
+      timeWalkCorrection = p1 / mtxSig.getToT();
+    }
+
+    mtxSig.setTime(pmSig.getTime() - bCorrection - timeWalkCorrection);
 
     fOutputEvents->add<JPetMatrixSignal>(mtxSig);
 

@@ -12,7 +12,7 @@ RUN apt-get update \
   libgsl0-dev \
   libjpeg-dev \
   libpq-dev \
-  libpythia8-dev \
+  # libpythia8-dev \
   libtbb-dev \
   libtiff-dev \
   libx11-dev \
@@ -23,8 +23,8 @@ RUN apt-get update \
   locales \
   lsb-release \
   make \
-  python \
-  python-dev \
+  python3 \
+  python3-dev \
   sudo \
   doxygen \
   # libfftw3-3 \
@@ -38,7 +38,7 @@ RUN apt-get update \
   freeglut3-dev \
   graphviz \
   libboost-all-dev \
-  libtbb-dev \
+  # libtbb-dev \
   nlohmann-json3-dev \
   && localedef -i en_US -f UTF-8 en_US.UTF-8
 

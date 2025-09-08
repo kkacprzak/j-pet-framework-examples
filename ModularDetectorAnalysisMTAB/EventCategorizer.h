@@ -81,7 +81,7 @@ protected:
 
   const std::string kMaxTimeDiffParamKey = "EventCategorizer_MaxTimeDiff_double";
   const std::string kDetectorYRotation = "CalibrationTools_Detector_Y_Rotation_Degrees_double";
-  const std::string kCosmicMaxThetaDeg = "CalibrationTools_Cosmic_MatTheta_Degrees_double";
+  const std::string kCosmicMaxThetaDeg = "CalibrationTools_Cosmic_MaxTheta_Degrees_double";
 
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
   const std::string kSaveCalibHistosParamKey = "Save_Calib_Histograms_bool";

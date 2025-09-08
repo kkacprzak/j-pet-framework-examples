@@ -253,12 +253,14 @@ void CalibrationTools::selectCosmicsForToF(const JPetEvent& event, JPetStatistic
 
       // Normal vector in X pointing down
       auto vecN_X = TVector3(-1.0, 0.0, 0.0);
+      auto vecN_Y = TVector3(0.0, -1.0, 0.0);
 
       // Checknig angle in XZ plane - including detector rotation in Y
       TVector3 hit1PosXZ(hit1->getPosX(), 0.0, hit1->getPosZ());
       TVector3 hit2PosXZ(hit2->getPosX(), 0.0, hit2->getPosZ());
       TVector3 cosmicXZ = hit2PosXZ - hit1PosXZ;
-      double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_X);
+      double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_Y);
+      // double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_X);
 
       stats.fillHistogram("cosmic_hits_theta_xz_all", thetaXZ);
       stats.fillHistogram("cosmic_hits_z_diff_all", hit2->getPosZ() - hit1->getPosZ());
@@ -273,11 +275,11 @@ void CalibrationTools::selectCosmicsForToF(const JPetEvent& event, JPetStatistic
       TVector3 hit1PosXY(hit1->getPosX(), hit1->getPosY(), 0.0);
       TVector3 hit2PosXY(hit2->getPosX(), hit2->getPosY(), 0.0);
       TVector3 cosmicXY = hit2PosXY - hit1PosXY;
-      double thetaXY = TMath::RadToDeg() * hit1PosXY.Angle(vecN_X);
+      double thetaXY = TMath::RadToDeg() * cosmicXY.Angle(vecN_Y);
 
       stats.fillHistogram("cosmic_hits_theta_xy_all", thetaXY);
       stats.fillHistogram("cosmic_hits_y_diff_all", hit2->getPosY() - hit1->getPosY());
-      if (fabs(180.0 - thetaXY) < maxThetaDiff)
+      if (fabs(thetaXY) < maxThetaDiff)
       {
         test2 = true;
         stats.fillHistogram("cosmic_hits_y_diff_cut", hit2->getPosY() - hit1->getPosY());

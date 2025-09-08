@@ -18,7 +18,7 @@
  *
  *  Basic usage:
  *  root> .L generate_lut_file.C
- *  root> generate_lut_file("detector_configuration.json", "output_file.lut)
+ *  root> generate_lut_file("detector_configuration.json", 38, "output_file.lut)
  *  -- this will produce file "output_file.lut" with the results.
  */
 
@@ -45,7 +45,6 @@ void generate_lut_file(std::string confFileName, int setupID = 38, std::string l
   }
 
   // Couter of the final number of the crystals
-  // int arraySize = 0;
   vector<double> output;
 
   BOOST_FOREACH (boost::property_tree::ptree::value_type& v, tree.get_child(to_string(setupID) + ".scin"))
