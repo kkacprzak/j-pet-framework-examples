@@ -15,94 +15,165 @@
 
 using namespace std;
 
+#include "SignalFinder.h"
 #include <JPetOptionsTools/JPetOptionsTools.h>
 #include <JPetTimeWindow/JPetTimeWindow.h>
 #include <JPetWriter/JPetWriter.h>
-#include "SignalFinder.h"
-#include <utility>
+#include <TRandom.h>
 #include <string>
+#include <utility>
 #include <vector>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace jpet_options_tools;
 
-SignalFinder::SignalFinder(const char* name): JPetUserTask(name) {}
+SignalFinder::SignalFinder(const char* name) : JPetUserTask(name) {}
 
 SignalFinder::~SignalFinder() {}
 
 bool SignalFinder::init()
 {
   INFO("Signal finding started.");
-  fOutputEvents = new JPetTimeWindow("JPetRawSignal");
+  fOutputEvents = new JPetTimeWindow("JPetPMSignal");
 
   // Reading values from the user options if available
   // Time window parameter for leading edge
-  if (isOptionSet(fParams.getOptions(), kEdgeMaxTimeParamKey)) {
-    fSigChEdgeMaxTime = getOptionAsFloat(fParams.getOptions(), kEdgeMaxTimeParamKey);
-  } else {
-    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.",
-      kEdgeMaxTimeParamKey.c_str(), fSigChEdgeMaxTime)
-    );
+  if (isOptionSet(fParams.getOptions(), kEdgeMaxTimeParamKey))
+  {
+    fEdgeMaxTime = getOptionAsDouble(fParams.getOptions(), kEdgeMaxTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kEdgeMaxTimeParamKey.c_str(), fEdgeMaxTime));
   }
 
   // Time window parameter for leading-trailing comparison
-  if (isOptionSet(fParams.getOptions(), kLeadTrailMaxTimeParamKey)) {
-    fSigChLeadTrailMaxTime = getOptionAsFloat(fParams.getOptions(), kLeadTrailMaxTimeParamKey);
-  } else {
-    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.",
-      kLeadTrailMaxTimeParamKey.c_str(), fSigChLeadTrailMaxTime));
+  if (isOptionSet(fParams.getOptions(), kLeadTrailMaxTimeParamKey))
+  {
+    fLeadTrailMaxTime = getOptionAsDouble(fParams.getOptions(), kLeadTrailMaxTimeParamKey);
+  }
+  else
+  {
+    WARNING(
+        Form("No value of the %s parameter provided by the user. Using default value of %lf.", kLeadTrailMaxTimeParamKey.c_str(), fLeadTrailMaxTime));
   }
 
-  // Get bool for using corrupted Signal Channels
-  if (isOptionSet(fParams.getOptions(), kUseCorruptedSigChParamKey)) {
-    fUseCorruptedSigCh = getOptionAsBool(fParams.getOptions(), kUseCorruptedSigChParamKey);
-    if(fUseCorruptedSigCh){
-      WARNING("Signal Finder is using Corrupted Signal Channels, as set by the user");
-    } else{
-      WARNING("Signal Finder is NOT using Corrupted Signal Channels, as set by the user");
+  // For plotting ToT histograms
+  if (isOptionSet(fParams.getOptions(), kToTHistoUpperLimitParamKey))
+  {
+    fToTHistoUpperLimit = getOptionAsDouble(fParams.getOptions(), kToTHistoUpperLimitParamKey);
+  }
+
+  if (isOptionSet(fParams.getOptions(), kToTCalculationTypeParamKey))
+  {
+    if (getOptionAsString(fParams.getOptions(), kToTCalculationTypeParamKey) == "simple")
+    {
+      fToTCalcType = SignalFinderTools::kSimplified;
     }
-  } else {
-    WARNING("Signal Finder is not using Corrupted Signal Channels (default option)");
+    else if (getOptionAsString(fParams.getOptions(), kToTCalculationTypeParamKey) == "rectangular")
+    {
+      fToTCalcType = SignalFinderTools::kThresholdRectangular;
+    }
+    else if (getOptionAsString(fParams.getOptions(), kToTCalculationTypeParamKey) == "trapeze")
+    {
+      fToTCalcType = SignalFinderTools::kThresholdTrapeze;
+    }
   }
+  else
+  {
+    WARNING("Unrecognized name for method of calculating ToT provided: use simple, rectangular of trapeze. Using default simplified method.");
+  }
+
+  // Get bool for using corrupted Channel Signals
+  if (isOptionSet(fParams.getOptions(), kUseCorruptedSigChParamKey))
+  {
+    fUseCorruptedChannelSignals = getOptionAsBool(fParams.getOptions(), kUseCorruptedSigChParamKey);
+    if (fUseCorruptedChannelSignals)
+    {
+      INFO("Signal Finder is using Corrupted Signal Channels, as set by the user");
+    }
+    else
+    {
+      INFO("Signal Finder is NOT using Corrupted Signal Channels, as set by the user");
+    }
+  }
+  else
+  {
+    INFO("Signal Finder is not using Corrupted Signal Channels (default option)");
+  }
+
+  // Option for requiring all thresholds to be recinstructed in the signal
+  if (isOptionSet(fParams.getOptions(), kRequireAllThresholdsParamKey))
+  {
+    fRequireAllThresholds = getOptionAsBool(fParams.getOptions(), kRequireAllThresholdsParamKey);
+    if (fRequireAllThresholds)
+    {
+      INFO("Saving only signals with all the threshlds reconstructed correctly.");
+    }
+  }
+
   // Reference detector photomultiplier identifier
-  if (isOptionSet(fParams.getOptions(), kRefPMIDParamKey)) {
+  if (isOptionSet(fParams.getOptions(), kRefPMIDParamKey))
+  {
     fRefPMID = getOptionAsInt(fParams.getOptions(), kRefPMIDParamKey);
-    WARNING("Signal Finder is ignoring Corrupted Signal Channels from the Refference detector as specified by the user (photomultiplier number + std::to_string(fRefPMID)");
+    INFO("Signal Finder is ignoring Corrupted Signal Channels from the Refference detector as specified by the user (photomultiplier number + "
+         "std::to_string(fRefPMID)");
   }
-  else{
-    WARNING("Signal Finder is ignoring Corrupted Signal Channels from the Refference detector(default photomultiplier number + std::to_string(fRefPMID)");
+  else
+  {
+    INFO(
+        "Signal Finder is ignoring Corrupted Signal Channels from the Refference detector(default photomultiplier number + std::to_string(fRefPMID)");
   }
+
   // Getting bool for saving histograms
-  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey)) {
+  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
+  {
     fSaveControlHistos = getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
   }
+
+  // Reading the calibration
+  if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
+  {
+    boost::property_tree::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
+  }
+
   // Check if the user requested ordering of thresholds by value
-  if (isOptionSet(fParams.getOptions(), kOrderThresholdsByValueKey)) {
+  if (isOptionSet(fParams.getOptions(), kOrderThresholdsByValueKey))
+  {
     fOrderThresholdsByValue = getOptionAsBool(fParams.getOptions(), kOrderThresholdsByValueKey);
   }
-  if (fOrderThresholdsByValue){
+  if (fOrderThresholdsByValue)
+  {
     INFO("Threshold reordering was requested. Thresholds will be ordered by their values according to provided detector setup file.");
-    fThresholdOrderings = SignalFinderTools::findThresholdOrders(getParamBank());
+    fThresholdOrderings = SignalFinderTools::findThresholdOrder(getParamBank());
   }
 
   // Creating control histograms
-  if(fSaveControlHistos) { initialiseHistograms(); }
+  if (fSaveControlHistos)
+  {
+    initialiseHistograms();
+  }
   return true;
 }
 
 bool SignalFinder::exec()
 {
   // Getting the data from event in an apropriate format
-  if(auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent)) {
+  if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
+  {
     // Distribute signal channels by PM IDs and filter out Corrupted SigChs if requested
-    auto& sigChByPM = SignalFinderTools::getSigChByPM(timeWindow, fUseCorruptedSigCh, fRefPMID);
+    auto& chSigsPMMap = SignalFinderTools::getChannelSignalsByPM(timeWindow, fUseCorruptedChannelSignals, fRefPMID);
+
     // Building signals
-    auto allSignals = SignalFinderTools::buildAllSignals(
-      sigChByPM, fSigChEdgeMaxTime, fSigChLeadTrailMaxTime,
-      getStatistics(), fSaveControlHistos, fThresholdOrderings
-    );
-    // Saving method invocation
-    saveRawSignals(allSignals);
-  } else { return false; }
+    auto allSignals = SignalFinderTools::buildAllSignals(chSigsPMMap, fEdgeMaxTime, fLeadTrailMaxTime, kNumOfThresholds, getStatistics(),
+                                                         fSaveControlHistos, fToTCalcType, fConstansTree, fThresholdOrderings);
+
+    savePMSignals(allSignals);
+  }
+  else
+  {
+    return false;
+  }
   return true;
 }
 
@@ -112,75 +183,102 @@ bool SignalFinder::terminate()
   return true;
 }
 
-void SignalFinder::saveRawSignals(const vector<JPetRawSignal>& rawSigVec)
+void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
 {
-  for (auto & rawSig : rawSigVec) { fOutputEvents->add<JPetRawSignal>(rawSig); }
+  if (pmSigVec.size() > 0 && fSaveControlHistos)
+  {
+    getStatistics().fillHistogram("pmsig_tslot", pmSigVec.size());
+  }
+
+  for (auto& pmSig : pmSigVec)
+  {
+    // Skip saving this signal if there is a requirement for threshld number
+    if (fRequireAllThresholds && pmSig.getLeadTrailPairs().size() != kNumOfThresholds)
+    {
+      continue;
+    }
+
+    fOutputEvents->add<JPetPMSignal>(pmSig);
+    if (fSaveControlHistos)
+    {
+      getStatistics().fillHistogram("pmsig_multi", pmSig.getLeadTrailPairs().size());
+      getStatistics().fillHistogram("pmsig_pm_id", pmSig.getPM().getID());
+      if (pmSig.getToT() != 0.0)
+      {
+        getStatistics().fillHistogram("pmsig_tot_pm_id", pmSig.getPM().getID(), pmSig.getToT());
+      }
+    }
+  }
 }
 
-void SignalFinder::initialiseHistograms(){
-  getStatistics().createHistogramWithAxes(
-    new TH1D("unused_sigch_all", "Unused Signal Channels",
-                                            8, 0.5, 8.5), "Signal label", "Number of SigChs");
-  std::vector<std::pair<unsigned, std::string>> binLabels;
-  binLabels.push_back(std::make_pair(1,"THR 1 Lead"));
-  binLabels.push_back(std::make_pair(2,"THR 1 Trail"));
-  binLabels.push_back(std::make_pair(3,"THR 2 Lead"));
-  binLabels.push_back(std::make_pair(4,"THR 2 Trail"));
-  binLabels.push_back(std::make_pair(5,"THR 3 Lead"));
-  binLabels.push_back(std::make_pair(6,"THR 3 Trail"));
-  binLabels.push_back(std::make_pair(7,"THR 4 Lead"));
-  binLabels.push_back(std::make_pair(8,"THR 4 Trail"));
-  getStatistics().setHistogramBinLabel("unused_sigch_all",
-                                       getStatistics().AxisLabel::kXaxis, binLabels);
+void SignalFinder::initialiseHistograms()
+{
+  auto minPMID = getParamBank().getPMs().begin()->first;
+  auto maxPMID = getParamBank().getPMs().rbegin()->first;
+
+  // Occupancies and multiplicities
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_pm_id", "PM Signals per PMT ID", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+                                          "PMT ID", "Number of PM Signals");
+
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_multi", "PM Signal Multiplicity", 6, 0.5, 6.5), "Total number of ChSigs in PMSig",
+                                          "Number of Signal Channels");
+
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_tslot", "Number of PM Signals in Time Window", 100, 0.5, 100.5),
+                                          "Number of PM Signal in Time Window", "Number of Time Windows");
+
+  // ToT of signals
+  getStatistics().createHistogramWithAxes(new TH2D("pmsig_tot_pm_id", "PMT Signal Time over Threshold per PMT ID", maxPMID - minPMID + 1,
+                                                   minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fToTHistoUpperLimit),
+                                          "PMT ID", "ToT [ps]");
+
+  getStatistics().createHistogramWithAxes(new TH1D("reco_flags_pmsig", "Number of good and corrupted Channel Sigals created", 4, 0.5, 4.5), " ",
+                                          "Number of Channel Signals");
+  vector<pair<unsigned, string>> binLabels1 = {make_pair(1, "GOOD"), make_pair(2, "CORRUPTED"), make_pair(3, "UNKNOWN"), make_pair(4, " ")};
+  getStatistics().setHistogramBinLabel("reco_flags_pmsig", getStatistics().AxisLabel::kXaxis, binLabels1);
+
+  vector<pair<unsigned, string>> binLabels;
+  binLabels.push_back(std::make_pair(1, "THR 1 Lead"));
+  binLabels.push_back(std::make_pair(2, "THR 1 Trail"));
+  binLabels.push_back(std::make_pair(3, "THR 2 Lead"));
+  binLabels.push_back(std::make_pair(4, "THR 2 Trail"));
+  binLabels.push_back(std::make_pair(5, "THR 3 Lead"));
+  binLabels.push_back(std::make_pair(6, "THR 3 Trail"));
+  binLabels.push_back(std::make_pair(7, "THR 4 Lead"));
+  binLabels.push_back(std::make_pair(8, "THR 4 Trail"));
+  binLabels.push_back(std::make_pair(9, " "));
+  getStatistics().createHistogramWithAxes(new TH1D("unused_chsig_thr", "Unused Channel Signals per THR (downscaled)", 9, 0.5, 9.5), " ",
+                                          "Number of Channel Signals");
+  getStatistics().setHistogramBinLabel("unused_chsig_thr", getStatistics().AxisLabel::kXaxis, binLabels);
 
   getStatistics().createHistogramWithAxes(
-    new TH1D("unused_sigch_good", "Unused Signal Channels with GOOD flag",
-                                            8, 0.5, 8.5), "Signal label", "Number of SigChs");
-  getStatistics().setHistogramBinLabel("unused_sigch_good",
-                                       getStatistics().AxisLabel::kXaxis, binLabels);
+      new TH1D("unused_chsig_pm", "Unused Signal Channels per PMT", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "PMT ID",
+      "Number of Channel Signals");
 
-  getStatistics().createHistogramWithAxes(
-    new TH1D("unused_sigch_corr", "Unused Signal Channels with CORRUPTED flag",
-                                            8, 0.5, 8.5), "Signal label", "Number of SigChs");
-  getStatistics().setHistogramBinLabel("unused_sigch_corr",
-                                       getStatistics().AxisLabel::kXaxis, binLabels);
+  // Threshold time differences
+  // Per PM for calibration
+  for (unsigned int thr = 1; thr <= kNumOfThresholds; thr++)
+  {
+    getStatistics().createHistogramWithAxes(new TH1D(Form("lead_trail_thr%d_diff", thr),
+                                                     Form("Time Difference between leading and trailing Signal Channels THR%d in found signals", thr),
+                                                     200, 0.0, fLeadTrailMaxTime),
+                                            "time diff [ps]", "Number of Signal Channels Pairs");
 
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_thr1_thr2_diff", "Time Difference between leading Signal Channels THR1 and THR2 in found signals",
-                                                    2.0*fSigChEdgeMaxTime/100.0, -fSigChEdgeMaxTime+125.0, fSigChEdgeMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_thr1_thr3_diff", "Time Difference between leading Signal Channels THR1 and THR3 in found signals",
-                                                    2.0*fSigChEdgeMaxTime/100.0, -fSigChEdgeMaxTime+125.0, fSigChEdgeMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_thr1_thr4_diff", "Time Difference between leading Signal Channels THR1 and THR4 in found signals",
-                                                    2.0*fSigChEdgeMaxTime/100.0, -fSigChEdgeMaxTime+125.0, fSigChEdgeMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_trail_thr1_diff", "Time Difference between leading and trailing Signal Channels THR1 in found signals",
-                                                    fSigChLeadTrailMaxTime/100.0, -125.0, fSigChLeadTrailMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_trail_thr2_diff", "Time Difference between leading and trailing Signal Channels THR2 in found signals",
-                                                    fSigChLeadTrailMaxTime/100.0, -125.0, fSigChLeadTrailMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_trail_thr3_diff", "Time Difference between leading and trailing Signal Channels THR3 in found signals",
-                                                    fSigChLeadTrailMaxTime/100.0, -125.0, fSigChLeadTrailMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
-  getStatistics().createHistogramWithAxes(
-      new TH1D("lead_trail_thr4_diff", "Time Difference between leading and trailing Signal Channels THR4 in found signals",
-                                                    fSigChLeadTrailMaxTime/100.0, -125.0, fSigChLeadTrailMaxTime-125.0),
-                                                    "time diff [ps]", "Number of Signal Channels Pairs");
+    getStatistics().createHistogramWithAxes(new TH2D(Form("lead_trail_thr%d_diff_pm", thr),
+                                                    Form("Time Difference between leading and trailing Signal Channels THR%d in found signals per PM", thr),
+                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fLeadTrailMaxTime),
+                                          "PM ID", "time diff [ps]");
 
-  getStatistics().createHistogramWithAxes(
-    new TH1D("good_v_bad_raw_sigs", "Number of good and corrupted signals created",
-                                            3, 0.5, 3.5), "Quality", "Number of Raw Signals");
-  binLabels.clear();
-  binLabels.push_back(std::make_pair(1,"GOOD"));
-  binLabels.push_back(std::make_pair(2,"CORRUPTED"));
-  binLabels.push_back(std::make_pair(3,"UNKNOWN"));
-  getStatistics().setHistogramBinLabel("good_v_bad_raw_sigs",
-                                       getStatistics().AxisLabel::kXaxis, binLabels);
+    for(unsigned int thr2 = thr + 1; thr2 <= kNumOfThresholds; thr2++)
+    {
+      getStatistics().createHistogramWithAxes(new TH1D(Form("lead_thr%d_thr%d_diff", thr, thr2),
+                                                       Form("Time Difference between leading Signal Channels THR%d and THR%d in found signals", thr, thr2),
+                                                       200, -fEdgeMaxTime, fEdgeMaxTime),
+                                              "time diff [ps]", "Number of Signal Channels Pairs");
+
+      getStatistics().createHistogramWithAxes(new TH2D(Form("lead_thr%d_thr%d_diff_pm", thr, thr2),
+                                                       Form("Time Difference between leading Signal Channels THR%d and THR%d in found signals per PM", thr, thr2),
+                                                   maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5, 200, -fEdgeMaxTime, fEdgeMaxTime),
+                                          "PM ID", "time diff [ps]");                                        
+    }
+  }
 }

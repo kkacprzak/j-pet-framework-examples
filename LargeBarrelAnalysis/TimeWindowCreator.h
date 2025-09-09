@@ -16,9 +16,11 @@
 #ifndef TIMEWINDOWCREATOR_H
 #define TIMEWINDOWCREATOR_H
 
-#include <JPetTOMBChannel/JPetTOMBChannel.h>
+#include <JPetChannel/JPetChannel.h>
 #include <JPetTimeWindow/JPetTimeWindow.h>
 #include <JPetUserTask/JPetUserTask.h>
+#include <Signals/JPetChannelSignal/JPetChannelSignal.h>
+#include <boost/property_tree/ptree.hpp>
 #include <map>
 #include <set>
 
@@ -43,26 +45,20 @@ public:
   virtual bool terminate() override;
 
 protected:
-  bool isAllowedChannel(JPetTOMBChannel& tombChannel) const;
-  void saveSigChs(const std::vector<JPetSigCh>& sigChVec);
+  void saveChannelSignals(const std::vector<JPetChannelSignal>& channelSignalVec);
   void initialiseHistograms();
-  const std::string kTimeCalibFileParamKey = "TimeCalibLoader_ConfigFile_std::string";
-  const std::string kThresholdFileParamKey = "ThresholdLoader_ConfigFile_std::string";
   const std::string kSaveControlHistosParamKey = "Save_Control_Histograms_bool";
-  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_float";
-  const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_float";
+  const std::string kConstantsFileParamKey = "ConstantsFile_std::string";
+  const std::string kMinTimeParamKey = "TimeWindowCreator_MinTime_double";
+  const std::string kMaxTimeParamKey = "TimeWindowCreator_MaxTime_double";
   const std::string kMainStripKey = "TimeWindowCreator_MainStrip_int";
+  boost::property_tree::ptree fConstansTree;
   const int kNumOfThresholds = 4;
-  std::map<unsigned int, std::vector<double>> fTimeCalibration;
-  std::map<unsigned int, std::vector<double>> fThresholds;
-  bool fSetTHRValuesFromChannels = true;
-  long long int fCurrEventNumber = 0;
-  std::set<int> fAllowedChannels;
   bool fSaveControlHistos = true;
-  std::pair<int, int> fMainStrip;
-  bool fMainStripSet = false;
-  double fMinTime = -1.e9;
+  double fMinTime = -1.e6;
   double fMaxTime = 0.;
+
+  std::map<std::uint32_t, int> fChannelOffsets;
 };
 
 #endif /* !TIMEWINDOWCREATOR_H */

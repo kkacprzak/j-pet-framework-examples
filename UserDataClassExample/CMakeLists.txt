@@ -38,39 +38,38 @@ set(projectBinary ${projectName}.x)
 project(${projectName} CXX)
 
 ## Using source files of modules from LargeBarrelAnalysis
-set(use_modules_from ../LargeBarrelAnalysis)
 
-set(HEADERS ${use_modules_from}/EventCategorizer.h
-            ${use_modules_from}/EventCategorizerTools.h
-            ${use_modules_from}/EventFinder.h
-            ${use_modules_from}/HitFinder.h
-            ${use_modules_from}/HitFinderTools.h
-            ${use_modules_from}/ToTEnergyConverter.h
-            ${use_modules_from}/ToTEnergyConverterFactory.h
-            ${use_modules_from}/SignalFinder.h
-            ${use_modules_from}/SignalFinderTools.h
-            ${use_modules_from}/SignalTransformer.h
-            ${use_modules_from}/TimeWindowCreator.h
-            ${use_modules_from}/TimeWindowCreatorTools.h
-            ${use_modules_from}/UniversalFileLoader.h
-            ${use_modules_from}/ToTEnergyConverter.h
+set(HEADERS ../ModularDetectorAnalysis/EventCategorizer.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/CalibrationTools.h
+            ../ModularDetectorAnalysis/EventFinder.h
+            ../ModularDetectorAnalysis/HitFinder.h
+            ../CommonTools/HitFinderTools.h
+            ../CommonTools/ToTEnergyConverter.h
+            ../CommonTools/ToTEnergyConverterFactory.h
+            ../ModularDetectorAnalysis/SignalFinder.h
+            ../CommonTools/SignalFinderTools.h
+            ../ModularDetectorAnalysis/SignalTransformer.h
+            ../CommonTools/SignalTransformerTools.h
+            ../ModularDetectorAnalysis/TimeWindowCreator.h
+            ../CommonTools/TimeWindowCreatorTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/LORFinder.h
             ${CMAKE_CURRENT_SOURCE_DIR}/JPetLORevent.h)
 
-set(SOURCES ${use_modules_from}/EventCategorizer.cpp
-            ${use_modules_from}/EventCategorizerTools.cpp
-            ${use_modules_from}/EventFinder.cpp
-            ${use_modules_from}/HitFinder.cpp
-            ${use_modules_from}/HitFinderTools.cpp
-            ${use_modules_from}/ToTEnergyConverter.cpp
-            ${use_modules_from}/ToTEnergyConverterFactory.cpp
-            ${use_modules_from}/SignalFinder.cpp
-            ${use_modules_from}/SignalFinderTools.cpp
-            ${use_modules_from}/SignalTransformer.cpp
-            ${use_modules_from}/TimeWindowCreator.cpp
-            ${use_modules_from}/TimeWindowCreatorTools.cpp
-            ${use_modules_from}/UniversalFileLoader.cpp
-            ${use_modules_from}/ToTEnergyConverter.cpp
+set(SOURCES ../ModularDetectorAnalysis/EventCategorizer.cpp
+            ../CommonTools/EventCategorizerTools.cpp
+            ../CommonTools/CalibrationTools.cpp
+            ../ModularDetectorAnalysis/EventFinder.cpp
+            ../ModularDetectorAnalysis/HitFinder.cpp
+            ../CommonTools/HitFinderTools.cpp
+            ../CommonTools/ToTEnergyConverter.cpp
+            ../CommonTools/ToTEnergyConverterFactory.cpp
+            ../ModularDetectorAnalysis/SignalFinder.cpp
+            ../CommonTools/SignalFinderTools.cpp
+            ../ModularDetectorAnalysis/SignalTransformer.cpp
+            ../CommonTools/SignalTransformerTools.cpp
+            ../ModularDetectorAnalysis/TimeWindowCreator.cpp
+            ../CommonTools/TimeWindowCreatorTools.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/LORFinder.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/JPetLORevent.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)

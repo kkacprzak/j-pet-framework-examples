@@ -1,6 +1,6 @@
 ################################################################################
 ## Data analysis project based on J-PET Framework
-## Created by J-PET Framework developers 2016-2018
+## Created by J-PET Framework developers 2016-2015
 ##
 ## Description:
 ##   Basic data reconstruction for Large Barrel setup
@@ -21,9 +21,7 @@ set(projectName LargeBarrelAnalysis)
 
 ## Auxiliary files
 set(AUXILIARY_FILES
-  dummyCalibration.txt
   userParams.json
-  conf_trb3.xml
   PARAMETERS.md
   README.md
   run.sh
@@ -34,36 +32,42 @@ set(AUXILIARY_FILES
 set(projectBinary ${projectName}.x)
 project(${projectName} CXX)
 
-set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
+set(HEADERS
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreatorTools.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/UniversalFileLoader.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h)
+            ../CommonTools/TimeWindowCreatorTools.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.h
+            ../CommonTools/SignalFinderTools.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.h
+            ../CommonTools/SignalTransformerTools.h
+            ../ModularDetectorAnalysis/HitFinder.h
+            ../ModularDetectorAnalysis/EventFinder.h
+            ../ModularDetectorAnalysis/EventCategorizer.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/HitFinderTools.h
+            ../CommonTools/EventCategorizerTools.h
+            ../CommonTools/CalibrationTools.h
+            ../CommonTools/ToTEnergyConverter.h
+            ../CommonTools/ToTEnergyConverterFactory.h
+            ../CommonTools/Downscaler.h
+            )
 
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizerTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EventFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/HitFinderTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinderTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
+set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreatorTools.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/UniversalFileLoader.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+            ../CommonTools/TimeWindowCreatorTools.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalFinder.cpp
+            ../CommonTools/SignalFinderTools.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SignalTransformer.cpp
+            ../CommonTools/SignalTransformerTools.cpp
+            ../ModularDetectorAnalysis/HitFinder.cpp
+            ../CommonTools/HitFinderTools.cpp
+            ../ModularDetectorAnalysis/EventFinder.cpp
+            ../ModularDetectorAnalysis/EventCategorizer.cpp
+            ../CommonTools/EventCategorizerTools.cpp
+            ../CommonTools/CalibrationTools.cpp
+            ../CommonTools/ToTEnergyConverter.cpp
+            ../CommonTools/ToTEnergyConverterFactory.cpp
+            ../CommonTools/Downscaler.cpp
+            )
 
 
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})
@@ -76,11 +80,3 @@ add_custom_target(clean_data_${projectName}
 ################################################################################
 ## Copy the example auxiliary files
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${AUXILIARY_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
-
-################################################################################
-## Unit tests
-option(PACKAGE_TESTS "Build the tests" ON)
-if(PACKAGE_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()

@@ -14,15 +14,14 @@ else()
     cmake_policy(VERSION 3.14)
 endif()
 
-project(JPetFrameworkExamples VERSION 7.0.0
-                  LANGUAGES CXX)
+project(JPetFrameworkExamples VERSION 8.0.0 LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "JPetFrameworkExamples module")
 
 message(STATUS "")
 message(STATUS "    == ${PROJECT_NAME} Project configuration ==")
 message(STATUS "")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
@@ -145,21 +144,23 @@ else()
   message(STATUS "Could not find JPetFramework, please source path/to/framework/bin/thisframework.sh to set correct paths..")
   find_package(JPetFramework CONFIG REQUIRED) #to print error message
 endif(JPetFramework_FOUND)
+
 ################################################################################
 ## Download input and configuration files
 ## The script shouldn't do anything if the data is present and correct.
+
 option(DOWNLOAD_DATA "Download data" ON)
 if(DOWNLOAD_DATA)
   set(DOWNLOAD_BASE_PATH ${PROJECT_SOURCE_DIR})
 
-  file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples_reformed.sha" ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
-  file(READ ${DOWNLOAD_BASE_PATH}/examples_reformed.sha SHA_HASHES)
+  file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/examples.sha" ${DOWNLOAD_BASE_PATH}/examples.sha)
+  file(READ ${DOWNLOAD_BASE_PATH}/examples.sha SHA_HASHES)
   string(REGEX REPLACE "\n" ";" SHA_HASHES "${SHA_HASHES}") #create cmake array from hash + file path
   foreach(SHA_HASH ${SHA_HASHES})
     string(REGEX REPLACE "  " ";" SHA_HASH "${SHA_HASH}") #Split hash and file path
     list(GET SHA_HASH 0 SHA256) #get sha hash
     list(GET SHA_HASH 1 PATH) #get file path
-    string(REPLACE "ExamplesReformed/" "" SAVE_PATH ${PATH})
+    string(REPLACE "Examples/" "" SAVE_PATH ${PATH})
 
     if(EXISTS "${DOWNLOAD_BASE_PATH}/${SAVE_PATH}")
       file(SHA256 ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} CURRENT_SHA256)
@@ -169,24 +170,25 @@ if(DOWNLOAD_DATA)
       file(DOWNLOAD "http://sphinx.if.uj.edu.pl/framework/${PATH}" ${DOWNLOAD_BASE_PATH}/${SAVE_PATH} EXPECTED_HASH SHA256=${SHA256})
     endif(NOT "${CURRENT_SHA256}" STREQUAL "${SHA256}")
   endforeach(SHA_HASH ${SHA_HASHES})
-  file(REMOVE ${DOWNLOAD_BASE_PATH}/examples_reformed.sha)
+  file(REMOVE ${DOWNLOAD_BASE_PATH}/examples.sha)
 endif()
 
 ################################################################################
 ## Directories with examples
-add_subdirectory(InterThresholdCalibration)
+add_subdirectory(ModularDetectorAnalysis)
+add_subdirectory(ModularDetectorAnalysisMTAB)
 add_subdirectory(LargeBarrelAnalysis)
-add_subdirectory(VelocityCalibration)
-add_subdirectory(NewAnalysisTemplate)
-add_subdirectory(ImageReconstruction)
-add_subdirectory(ScopeLoaderExample)
-add_subdirectory(TimeCalibration)
-add_subdirectory(MCGeantAnalysis)
-add_subdirectory(PhysicAnalysis)
-add_subdirectory(CosmicAnalysis)
-add_subdirectory(ScopeAnalysis)
-add_subdirectory(Imaging)
-add_subdirectory(TimeCalibration_iter)
-add_subdirectory(TimeCalibration_lifetime)
+add_subdirectory(MCAnalysis)
+add_subdirectory(ListmodeExport)
+add_subdirectory(NTupleExport)
+add_subdirectory(NTupleAnalysis)
 add_subdirectory(UserDataClassExample)
-add_subdirectory(TOTAnalysis)
+add_subdirectory(ImageReconstruction)
+
+################################################################################
+## Unit tests
+option(PACKAGE_TESTS "Build the tests" ON)
+if(PACKAGE_TESTS)
+    enable_testing()
+    add_subdirectory(CommonTools/tests)
+endif()

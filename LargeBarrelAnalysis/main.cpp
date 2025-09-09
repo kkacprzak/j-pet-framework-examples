@@ -13,10 +13,10 @@
  *  @file main.cpp
  */
 
-#include "Downscaler.h"
-#include "EventCategorizer.h"
-#include "EventFinder.h"
-#include "HitFinder.h"
+#include "../ModularDetectorAnalysis/EventCategorizer.h"
+#include "../ModularDetectorAnalysis/EventFinder.h"
+#include "../ModularDetectorAnalysis/HitFinder.h"
+#include "../CommonTools/Downscaler.h"
 #include "SignalFinder.h"
 #include "SignalTransformer.h"
 #include "TimeWindowCreator.h"
@@ -38,10 +38,10 @@ int main(int argc, const char* argv[])
     manager.registerTask<Downscaler>("Downscaler");
     manager.registerTask<EventCategorizer>("EventCategorizer");
 
-    manager.useTask("TimeWindowCreator", "hld", "tslot.calib");
-    manager.useTask("SignalFinder", "tslot.calib", "raw.sig");
-    manager.useTask("SignalTransformer", "raw.sig", "phys.sig");
-    manager.useTask("HitFinder", "phys.sig", "hits");
+    manager.useTask("TimeWindowCreator", "hld", "tslot");
+    manager.useTask("SignalFinder", "tslot", "pm.sig");
+    manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
+    manager.useTask("HitFinder", "mtx.sig", "hits");
     manager.useTask("EventFinder", "hits", "unk.evt");
     manager.useTask("Downscaler", "unk.evt", "presel.evt");
     manager.useTask("EventCategorizer", "presel.evt", "cat.evt");
@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
   }
   catch (const std::exception& except)
   {
-    std::cerr << "Unrecoverable error occured:" << except.what() << "Exiting the program!" << std::endl;
+    std::cerr << "Unrecoverable error occured: " << except.what() << "Exiting the program!" << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

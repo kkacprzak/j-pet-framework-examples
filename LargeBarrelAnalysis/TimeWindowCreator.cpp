@@ -1,5 +1,5 @@
 /**
- *  @copyright Copyright 2020 The J-PET Framework Authors. All rights reserved.
+ *  @copyright Copyright 2021 The J-PET Framework Authors. All rights reserved.
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may find a copy of the License in the LICENCE file.
@@ -14,225 +14,232 @@
  */
 
 #include "TimeWindowCreator.h"
-#include "EventIII.h"
-#include "JPetGeomMapping/JPetGeomMapping.h"
-#include "JPetOptionsTools/JPetOptionsTools.h"
-#include "JPetWriter/JPetWriter.h"
-#include "TimeWindowCreatorTools.h"
-#include "UniversalFileLoader.h"
+#include "../CommonTools/TimeWindowCreatorTools.h"
+#include "Unpacker2/EventIII.h"
+#include "Unpacker2/TDCChannel.h"
+#include <JPetOptionsTools/JPetOptionsTools.h>
+#include <JPetWriter/JPetWriter.h>
+#include <Signals/JPetChannelSignal/JPetChannelSignal.h>
+
+#include <boost/property_tree/json_parser.hpp>
+#include <iostream>
+#include <utility>
 
 using namespace jpet_options_tools;
 using namespace std;
+namespace pt = boost::property_tree;
 
-TimeWindowCreator::TimeWindowCreator(const char *name) : JPetUserTask(name) {}
+TimeWindowCreator::TimeWindowCreator(const char* name) : JPetUserTask(name) {}
 
 TimeWindowCreator::~TimeWindowCreator() {}
 
-bool TimeWindowCreator::init() {
+bool TimeWindowCreator::init()
+{
   INFO("TimeSlot Creation Started");
-  fOutputEvents = new JPetTimeWindow("JPetSigCh");
+  fOutputEvents = new JPetTimeWindow("JPetChannelSignal");
 
   // Reading values from the user options if available
   // Min allowed signal time
-  if (isOptionSet(fParams.getOptions(), kMinTimeParamKey)) {
-    fMinTime = getOptionAsFloat(fParams.getOptions(), kMinTimeParamKey);
-  } else {
-    WARNING(Form("No value of the %s parameter provided by the user. Using "
-                 "default value of %lf.",
-                 kMinTimeParamKey.c_str(), fMinTime));
+  if (isOptionSet(fParams.getOptions(), kMinTimeParamKey))
+  {
+    fMinTime = getOptionAsDouble(fParams.getOptions(), kMinTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMinTimeParamKey.c_str(), fMinTime));
   }
   // Max allowed signal time
-  if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey)) {
-    fMaxTime = getOptionAsFloat(fParams.getOptions(), kMaxTimeParamKey);
-  } else {
-    WARNING(Form("No value of the %s parameter provided by the user. Using "
-                 "default value of %lf.",
-                 kMaxTimeParamKey.c_str(), fMaxTime));
+  if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey))
+  {
+    fMaxTime = getOptionAsDouble(fParams.getOptions(), kMaxTimeParamKey);
   }
-  // Getting time calibration file from user options
-  auto calibFile = std::string("dummyCalibration.txt");
-  if (isOptionSet(fParams.getOptions(), kTimeCalibFileParamKey)) {
-    calibFile = getOptionAsString(fParams.getOptions(), kTimeCalibFileParamKey);
-  } else {
-    WARNING(
-        "No path to the time calibration file was provided in user options.");
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMaxTimeParamKey.c_str(), fMaxTime));
   }
-  // Getting threshold values file from user options
-  auto thresholdFile = std::string("dummyCalibration.txt");
-  if (isOptionSet(fParams.getOptions(), kThresholdFileParamKey)) {
-    thresholdFile =
-        getOptionAsString(fParams.getOptions(), kThresholdFileParamKey);
-    fSetTHRValuesFromChannels = false;
-  } else {
-    WARNING("No path to the file with threshold values was provided in user "
-            "options.");
+
+  // Getting the calibration file from user options
+  if (isOptionSet(fParams.getOptions(), kConstantsFileParamKey))
+  {
+    pt::read_json(getOptionAsString(fParams.getOptions(), kConstantsFileParamKey), fConstansTree);
   }
+
   // Getting bool for saving histograms
-  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey)) {
-    fSaveControlHistos =
-        getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
-  }
-  // Use of Time Calibratin and Thresholds files
-  JPetGeomMapping mapper(getParamBank());
-  auto tombMap = mapper.getTOMBMapping();
-  fTimeCalibration =
-      UniversalFileLoader::loadConfigurationParameters(calibFile, tombMap);
-  if (fTimeCalibration.empty()) {
-    ERROR("Time Calibration seems to be empty");
-  }
-  fThresholds =
-      UniversalFileLoader::loadConfigurationParameters(thresholdFile, tombMap);
-  if (fThresholds.empty()) {
-    ERROR("Thresholds values seem to be empty");
+  if (isOptionSet(fParams.getOptions(), kSaveControlHistosParamKey))
+  {
+    fSaveControlHistos = getOptionAsBool(fParams.getOptions(), kSaveControlHistosParamKey);
   }
 
-  // Reference Detector
-  // Take coordinates of the main (irradiated strip) from user parameters
-  if (isOptionSet(fParams.getOptions(), kMainStripKey)) {
-    fMainStripSet = true;
-    int code = getOptionAsInt(fParams.getOptions(), kMainStripKey);
-    fMainStrip.first = code / 100;  // layer number
-    fMainStrip.second = code % 100; // strip number
-
-    INFO(Form("Filtering of SigCh-s was requested. Only data from strip %d in "
-              "layer %d will be used.",
-              fMainStrip.second, fMainStrip.first));
-
-    // Build a list of allowed channels
-    JPetGeomMapping mapper(getParamBank());
-    for (int thr = 1; thr <= 4; ++thr) {
-      int tombNumber = mapper.getTOMB(fMainStrip.first, fMainStrip.second,
-                                      JPetPM::SideA, thr);
-      fAllowedChannels.insert(tombNumber);
-      tombNumber = mapper.getTOMB(fMainStrip.first, fMainStrip.second,
-                                  JPetPM::SideB, thr);
-      fAllowedChannels.insert(tombNumber);
-    }
-    // Add all reference detector channels to allowed channels list
-    for (int thr = 1; thr <= 4; ++thr) {
-      int tombNumber = mapper.getTOMB(4, 1, JPetPM::SideA, thr);
-      fAllowedChannels.insert(tombNumber);
-      tombNumber = mapper.getTOMB(4, 1, JPetPM::SideB, thr);
-      fAllowedChannels.insert(tombNumber);
-    }
+  // build a lookup table of channel offsets
+  for (auto& dm : getParamBank().getDataModules())
+  {
+    fChannelOffsets[dm.second->getTBRNetAddress()] = dm.second->getChannelsOffset();
   }
 
   // Control histograms
-  if (fSaveControlHistos) {
+  if (fSaveControlHistos)
+  {
     initialiseHistograms();
   }
   return true;
 }
 
-bool TimeWindowCreator::exec() {
-  if (auto event = dynamic_cast<EventIII *const>(fEvent)) {
-    int kTDCChannels = event->GetTotalNTDCChannels();
-    if (fSaveControlHistos) {
-      getStatistics().fillHistogram("sig_ch_per_time_slot", kTDCChannels);
-    }
-    // Loop over all TDC channels in file
+bool TimeWindowCreator::exec()
+{
+  if (auto event = dynamic_cast<EventIII* const>(fEvent))
+  {
+    int numTDCChannels = event->GetTotalNTDCChannels();
     auto tdcChannels = event->GetTDCChannelsArray();
-    for (int i = 0; i < kTDCChannels; ++i) {
-      auto tdcChannel = dynamic_cast<TDCChannel *const>(tdcChannels->At(i));
-      auto tombNumber = tdcChannel->GetChannel();
+
+    if (fSaveControlHistos)
+    {
+      getStatistics().fillHistogram("chsig_tslot", numTDCChannels);
+    }
+
+    for (int i = 0; i < numTDCChannels; ++i)
+    {
+      auto tdcChannel = dynamic_cast<TDCChannel* const>(tdcChannels->At(i));
+      auto channelID = tdcChannel->GetChannel();
+
       // Skip trigger signals from TRB - every 65th
-      if (tombNumber % 65 == 0)
+      if (channelID % 65 == 0)
+      {
         continue;
+      }
+
       // Check if channel exists in database from loaded local file
-      if (getParamBank().getTOMBChannels().count(tombNumber) == 0) {
-        WARNING(Form("DAQ Channel %d appears in data but does not exist in the "
-                     "detector setup.",
-                     tombNumber));
+      if (getParamBank().getChannels().count(channelID) == 0)
+      {
+        if (fSaveControlHistos)
+        {
+          getStatistics().fillHistogram("wrong_channel", channelID);
+        }
         continue;
       }
       // Get channel for corresponding number
-      auto &tombChannel = getParamBank().getTOMBChannel(tombNumber);
+      auto& channel = getParamBank().getChannel(channelID);
+      double synchroOffset =
+          fConstansTree.get("pm_thr_offsets." + to_string(channel.getPM().getID()) + "." + to_string(channel.getThresholdNumber()), 0.0);
 
-      // Reference Detector
-      // Ignore irrelevant channels
-      if (!isAllowedChannel(tombChannel))
-        continue;
-
-      // Building Signal Channels for this TOMB Channel
-      auto allSigChs = TimeWindowCreatorTools::buildSigChs(
-          tdcChannel, tombChannel, fTimeCalibration, fThresholds, fMaxTime,
-          fMinTime, fSetTHRValuesFromChannels, getStatistics(),
-          fSaveControlHistos);
+      // Building Channel Signals for this TDC Channel
+      auto allChSigs = TimeWindowCreatorTools::buildChannelSignals(tdcChannel, channel, fMaxTime, fMinTime, synchroOffset);
 
       // Sort Signal Channels in time
-      TimeWindowCreatorTools::sortByValue(allSigChs);
+      TimeWindowCreatorTools::sortByTime(allChSigs);
 
       // Flag with Good or Corrupted
-      TimeWindowCreatorTools::flagSigChs(allSigChs, getStatistics(),
-                                         fSaveControlHistos);
+      TimeWindowCreatorTools::flagChannelSignals(allChSigs, getStatistics(), fSaveControlHistos);
 
       // Save result
-      saveSigChs(allSigChs);
+      saveChannelSignals(allChSigs);
     }
-    fCurrEventNumber++;
-  } else {
+
+  }
+  else
+  {
     return false;
   }
   return true;
 }
 
-bool TimeWindowCreator::terminate() {
+bool TimeWindowCreator::terminate()
+{
   INFO("TimeSlot Creation Ended");
   return true;
 }
 
-void TimeWindowCreator::saveSigChs(const vector<JPetSigCh> &sigChVec) {
-  for (auto &sigCh : sigChVec) {
-    fOutputEvents->add<JPetSigCh>(sigCh);
+void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& channelSigVec)
+{
+  if (fSaveControlHistos)
+  {
+    getStatistics().fillHistogram("chsig_tslot", channelSigVec.size());
+  }
+
+  for (auto& channelSig : channelSigVec)
+  {
+    fOutputEvents->add<JPetChannelSignal>(channelSig);
+    if (fSaveControlHistos)
+    {
+      getStatistics().fillHistogram("chsig_time", channelSig.getTime());
+      getStatistics().fillHistogram("channel_occ", channelSig.getChannel().getID());
+
+      getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
+      getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
+
+      if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 1);
+      }
+      else if (channelSig.getRecoFlag() == JPetRecoSignal::Corrupted)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 2);
+      }
+      else if (channelSig.getRecoFlag() == JPetRecoSignal::Unknown)
+      {
+        getStatistics().fillHistogram("reco_flags_chsig", 3);
+      }
+    }
   }
 }
 
-/**
- * Reference Detector
- * Returns true if signal from the channel given as argument should be passed
- */
-bool TimeWindowCreator::isAllowedChannel(JPetTOMBChannel &tombChannel) const {
-  // If main strip was not defined, pass all channels
-  if (!fMainStripSet)
-    return true;
-  if (fAllowedChannels.find(tombChannel.getChannel()) !=
-      fAllowedChannels.end()) {
-    return true;
-  }
-  return false;
-}
+void TimeWindowCreator::initialiseHistograms()
+{
+  // Channels and PMs IDs from Param Bank
+  auto minChannelID = getParamBank().getChannels().begin()->first;
+  auto maxChannelID = getParamBank().getChannels().rbegin()->first;
 
-void TimeWindowCreator::initialiseHistograms() {
-  getStatistics().createHistogramWithAxes(new TH1D("sig_ch_per_time_slot", "Signal Channels Per Time Slot", 250, -0.125, 999.875),
-                                                    "Signal Channels in Time Slot", "Number of Time Slots");
-
-  for (int i = 1; i <= kNumOfThresholds; i++) {
-    getStatistics().createHistogramWithAxes(new TH1D(Form("pm_occupation_thr%d", i), Form("Signal Channels per PM on THR %d", i), 
-                                                    385, 0.5, 385.5), "PM ID)", "Number of Signal Channels");
-  }
+  auto minPMID = getParamBank().getPMs().begin()->first;
+  auto maxPMID = getParamBank().getPMs().rbegin()->first;
 
   getStatistics().createHistogramWithAxes(
-    new TH1D("good_vs_bad_sigch", "Number of good and corrupted SigChs created",
-                                            3, 0.5, 3.5), "Quality", "Number of SigChs");
-  std::vector<std::pair<unsigned, std::string>> binLabels;
-  binLabels.push_back(std::make_pair(1,"GOOD"));
-  binLabels.push_back(std::make_pair(2,"CORRUPTED"));
-  binLabels.push_back(std::make_pair(3,"UNKNOWN"));
-  getStatistics().setHistogramBinLabel("good_vs_bad_sigch",
-                                       getStatistics().AxisLabel::kXaxis, binLabels);
+      new TH1D("channel_occ", "Channel occupancy", maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
+      "Channels Signal in Time Slot", "Number of Time Slots");
 
-  getStatistics().createHistogramWithAxes(new TH1D("LT_time_diff", "LT time diff", 200, -250.0, 999750.0),
-                                                    "Time Diff [ps]", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_per_PM", "Number of LL found on PMs", 385, 0.5, 385.5),
-                                                    "PM ID", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_per_THR", "Number of found LL on Thresolds", 4, 0.5, 4.5),
-                                                    "THR Number", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("LL_time_diff", "Time diff of LL pairs", 200, -750.0, 299250.0),
-                                                    "Time Diff [ps]", "Number of LL pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_per_PM", "Number of TT found on PMs", 385, 0.5, 385.5),
-                                                    "PM ID", "Number of TT pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_per_THR", "Number of found TT on Thresolds", 4, 0.5, 4.5),
-                                                    "THR Number", "Number of TT pairs");
-  getStatistics().createHistogramWithAxes(new TH1D("TT_time_diff", "Time diff of TT pairs", 200, -750.0, 299250.0),
-                                                    "Time Diff [ps]", "Number of TT pairs");
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Signal Channels Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Channels Signal in Time Slot", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 100, 0.5, 100.5), "Channels Signal in Time Slot",
+                                          "Number of Time Slots");
+
+  // Wrong configuration
+  getStatistics().createHistogramWithAxes(new TH1D("wrong_channel", "Channel IDs not found in the json configuration",
+                                                   maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
+                                          "Channel ID", "Number of Channel Signals");
+
+  getStatistics().createHistogramWithAxes(new TH1D("pm_occ", "Channels Signals per PM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "PM ID",
+                                          "Number of Channel Signals");
+
+  for (int i = 1; i <= kNumOfThresholds; i++)
+  {
+    getStatistics().createHistogramWithAxes(
+        new TH1D(Form("pm_occ_thr%d", i), Form("Channels Signals per PM on THR %d", i), maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "PM ID",
+        "Number of Channel Signals");
+  }
+
+  getStatistics().createHistogramWithAxes(new TH1D("reco_flags_chsig", "Number of good and corrupted Channel Sigals created", 4, 0.5, 4.5), " ",
+                                          "Number of Channel Signals");
+  vector<pair<unsigned, string>> binLabels = {make_pair(1, "GOOD"), make_pair(2, "CORRUPTED"), make_pair(3, "UNKNOWN"), make_pair(4, " ")};
+  getStatistics().setHistogramBinLabel("reco_flags_chsig", getStatistics().AxisLabel::kXaxis, binLabels);
+
+  // Flagging histograms
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LT_tdiff", "LT time diff", 400, -200000.0, 200000.0), "Time Diff [ps]",
+                                          "Number of LT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_tdiff", "Time diff of LL pairs", 200, 0.0, 5000.0), "Time Diff [ps]",
+                                          "Number of LL pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_tdiff", "Time diff of TT pairs", 200, 0.0, 50000.0), "Time Diff [ps]",
+                                          "Number of TT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_PM", "Number of LL found on PMs", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+                                          "PM ID", "Number of LL pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_PM", "Number of TT found on PMs", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5),
+                                          "PM ID", "Number of TT pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_LL_THR", "Number of found LL on Thresolds", 4, 0.5, 4.5), "THR Number",
+                                          "Number of LL pairs");
+
+  getStatistics().createHistogramWithAxes(new TH1D("filter_TT_THR", "Number of found TT on Thresolds", 4, 0.5, 4.5), "THR Number",
+                                          "Number of TT pairs");
 }

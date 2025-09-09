@@ -14,6 +14,8 @@
  */
 
 #include "JPetGojaParser.h"
+#include "Hits/JPetBaseHit/JPetBaseHit.h"
+#include "JPetEvent/JPetEvent.h"
 #include "./JPetOptionsTools/JPetOptionsTools.h"
 using namespace jpet_options_tools;
 
@@ -47,14 +49,16 @@ bool JPetGojaParser::exec() {
     in >> firstX >> firstY >> firstZ >> firstT >> secondX >> secondY >> secondZ >> secondT >> skip >> skip >> skip >> skip >> skip >> skip >> skip >>
         skip;
 
-    JPetHit h1;
+    JPetBaseHit h1;
     h1.setPos(firstX, firstY, firstZ);
     h1.setTime(firstT);
-    JPetHit h2;
+    JPetBaseHit h2;
     h2.setPos(secondX, secondY, secondZ);
     h2.setTime(secondT);
-    std::vector<JPetHit> hits = {h1, h2};
-    fOutputEvents->add(JPetEvent(hits));
+    JPetEvent event;
+    event.addHit(&h1);
+    event.addHit(&h2);
+    fOutputEvents->add(event);
   }
 
   return true;

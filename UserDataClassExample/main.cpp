@@ -13,18 +13,20 @@
  *  @file main.cpp
  */
 
-#include "../LargeBarrelAnalysis/EventFinder.h"
-#include "../LargeBarrelAnalysis/HitFinder.h"
-#include "../LargeBarrelAnalysis/SignalFinder.h"
-#include "../LargeBarrelAnalysis/SignalTransformer.h"
-#include "../LargeBarrelAnalysis/TimeWindowCreator.h"
+#include "../ModularDetectorAnalysis/EventFinder.h"
+#include "../ModularDetectorAnalysis/HitFinder.h"
+#include "../ModularDetectorAnalysis/SignalFinder.h"
+#include "../ModularDetectorAnalysis/SignalTransformer.h"
+#include "../ModularDetectorAnalysis/TimeWindowCreator.h"
 #include "LORFinder.h"
 #include <JPetManager/JPetManager.h>
 using namespace std;
 
-int main(int argc, const char *argv[]) {
-  try {
-    JPetManager &manager = JPetManager::getManager();
+int main(int argc, const char* argv[])
+{
+  try
+  {
+    JPetManager& manager = JPetManager::getManager();
 
     manager.registerTask<TimeWindowCreator>("TimeWindowCreator");
     manager.registerTask<SignalFinder>("SignalFinder");
@@ -33,17 +35,18 @@ int main(int argc, const char *argv[]) {
     manager.registerTask<EventFinder>("EventFinder");
     manager.registerTask<LORFinder>("LORFinder");
 
-    manager.useTask("TimeWindowCreator", "hld", "tslot.calib");
-    manager.useTask("SignalFinder", "tslot.calib", "raw.sig");
-    manager.useTask("SignalTransformer", "raw.sig", "phys.sig");
-    manager.useTask("HitFinder", "phys.sig", "hits");
+    manager.useTask("TimeWindowCreator", "hld", "tslot");
+    manager.useTask("SignalFinder", "tslot", "pm.sig");
+    manager.useTask("SignalTransformer", "pm.sig", "mtx.sig");
+    manager.useTask("HitFinder", "mtx.sig", "hits");
     manager.useTask("EventFinder", "hits", "unk.evt");
     manager.useTask("LORFinder", "unk.evt", "lor.evt");
 
     manager.run(argc, argv);
-  } catch (const std::exception &except) {
-    std::cerr << "Unrecoverable error occured:" << except.what()
-              << "Exiting the program!" << std::endl;
+  }
+  catch (const std::exception& except)
+  {
+    std::cerr << "Unrecoverable error occured:" << except.what() << "Exiting the program!" << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

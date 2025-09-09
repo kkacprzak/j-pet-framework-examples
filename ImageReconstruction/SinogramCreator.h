@@ -16,15 +16,14 @@
 #ifndef SINOGRAMCREATOR_H
 #define SINOGRAMCREATOR_H
 
-#include "JPetGeomMapping/JPetGeomMapping.h"
-#include "JPetHit/JPetHit.h"
+#include "JPetSinogramType.h"
+#include "Hits/JPetBaseHit/JPetBaseHit.h"
 #include "JPetUserTask/JPetUserTask.h"
 #include "SinogramCreatorTools.h"
 #include <random>
 #include <string>
 #include <vector>
 
-#include "JPetSinogramType.h"
 
 /**
  * @brief Module creating sinogram from data
@@ -59,7 +58,7 @@ public:
   virtual bool terminate() override;
 
 protected:
-  bool analyzeHits(const JPetHit& firstHit, const JPetHit& secondHit);
+  bool analyzeHits(const JPetBaseHit* firstHit, const JPetBaseHit* secondHit);
   bool analyzeHits(const TVector3& firstHit, const float firstTOF, const TVector3& secondHit, const float secondTOF);
   bool analyzeHits(const float firstX, const float firstY, const float firstZ, const double firstTOF, const float secondX, const float secondY,
                    const float secondZ, const double secondTOF);

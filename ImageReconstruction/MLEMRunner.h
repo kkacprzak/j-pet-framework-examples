@@ -48,7 +48,6 @@
  * Input: *.reco.unk.evt
  * Output: none
  *
- *
  * It defines 5 user options:
  *  "MLEMRunner_OutFileName_std::string" : filename of ascii file where translated data will be saved
  *  "MLEMRunner_NumberOfPixelsInOneDimension_int" : number of pixels in reconstructed image

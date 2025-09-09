@@ -8,7 +8,7 @@ pipeline {
                 axes {
                     axis {
                         name 'ROOT'
-                        values 'root_v6.12.06'
+                        values 'root_v6.36.06'
                     }
                     axis {
                         name 'GCC'

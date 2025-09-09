@@ -17,6 +17,7 @@
 #define FILTEREVENTS_H
 
 #include "JPetUserTask/JPetUserTask.h"
+#include "Hits/JPetPhysRecoHit/JPetPhysRecoHit.h"
 #include <memory>
 
 /**
@@ -39,17 +40,14 @@ public:
   virtual bool terminate() override;
 
 private:
-  bool cutOnZ(const JPetHit& first, const JPetHit& second);
-  bool cutOnLORDistanceFromCenter(const JPetHit& first, const JPetHit& second);
-  float angleDelta(const JPetHit& first, const JPetHit& second);
-  double calculateSumOfTOTsOfHit(const JPetHit& hit);
-  double calculateSumOfTOTs(const JPetPhysSignal& signal);
-  bool checkConditions(const JPetHit& first, const JPetHit& second);
+  bool cutOnZ(const JPetPhysRecoHit* first, const JPetPhysRecoHit* second);
+  bool cutOnLORDistanceFromCenter(const JPetPhysRecoHit* first, const JPetPhysRecoHit* second);
+  float angleDelta(const JPetPhysRecoHit* first, const JPetPhysRecoHit* second);
+  bool checkConditions(const JPetPhysRecoHit* first, const JPetPhysRecoHit* second);
   void setUpOptions();
 
   const std::string kCutOnZValueKey = "FilterEvents_Cut_On_Z_Value_float";
   const std::string kCutOnLORDistanceKey = "FilterEvents_Cut_On_LOR_Distance_From_Center_float";
-
   const std::string kCutOnTOTMinValueKey = "FilterEvents_TOT_Min_Value_In_Ns_float";
   const std::string kCutOnTOTMaxValueKey = "FilterEvents_TOT_Max_Value_In_Ns_float";
   const std::string kCutOnAngleDeltaMinValueKey = "FilterEvents_Angle_Delta_Min_Value_float";

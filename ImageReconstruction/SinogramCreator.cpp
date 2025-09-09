@@ -13,6 +13,7 @@
  *  @file SinogramCreator.cpp
  */
 
+#include "JPetEvent/JPetEvent.h"
 #include "SinogramCreator.h"
 #include <TH1I.h>
 #include <TH2F.h>
@@ -103,12 +104,13 @@ bool SinogramCreator::exec()
     {
       const auto event = dynamic_cast<const JPetEvent&>(timeWindow->operator[](static_cast<int>(i)));
       const auto hits = event.getHits();
-      if (hits.size() != 2)
+      if (event.getHits().size() != 2)
       {
         continue;
       }
-      const auto& firstHit = hits[0];
-      const auto& secondHit = hits[1];
+      const auto firstHit = dynamic_cast<const JPetBaseHit*>(event.getHits().at(0));
+      const auto secondHit = dynamic_cast<const JPetBaseHit*>(event.getHits().at(1));
+
       if (analyzeHits(firstHit, secondHit))
         fNumberOfCorrectHits++;
       fTotalAnalyzedHits++;
@@ -122,9 +124,9 @@ bool SinogramCreator::exec()
   return true;
 }
 
-bool SinogramCreator::analyzeHits(const JPetHit& firstHit, const JPetHit& secondHit)
+bool SinogramCreator::analyzeHits(const JPetBaseHit* firstHit, const JPetBaseHit* secondHit)
 {
-  return analyzeHits(firstHit.getPos(), firstHit.getTime(), secondHit.getPos(), secondHit.getTime());
+  return analyzeHits(firstHit->getPos(), firstHit->getTime(), secondHit->getPos(), secondHit->getTime());
 }
 
 bool SinogramCreator::analyzeHits(const float firstX, const float firstY, const float firstZ, const double firstTOF, const float secondX,
@@ -251,8 +253,7 @@ void SinogramCreator::setUpOptions()
   else
   {
     const JPetParamBank& bank = getParamBank();
-    const JPetGeomMapping mapping(bank);
-    fMaxReconstructionLayerRadius = mapping.getRadiusOfLayer(mapping.getLayersCount() - 1);
+    fMaxReconstructionLayerRadius = bank.getLayer(bank.getLayersSize() - 1).getRadius();
   }
 
   const float maxZRange = fScintillatorLenght / 2.f;
