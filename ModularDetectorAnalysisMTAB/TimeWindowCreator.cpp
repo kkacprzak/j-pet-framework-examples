@@ -176,6 +176,12 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 
     for (auto& channelSig : channelSigVec)
     {
+      // Saving only leading edges of trigger signals
+      if(channelSig.getChannel().getPM().getID() == fTriggerPMID && channelSig.getEdgeType() == JPetChannelSignal::Trailing)
+      {
+        continue;
+      }
+
       if (channelSig.getRecoFlag() == JPetChannelSignal::Good)
       {
         fOutputEvents->add<JPetChannelSignal>(channelSig);
@@ -184,7 +190,16 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
       if (fSaveControlHistos)
       {
         getStatistics().fillHistogram("chsig_time", channelSig.getTime());
-        getStatistics().fillHistogram("occ_channels", channelSig.getChannel().getID());
+        if(channelSig.getChannel().getPM().getID() == fTriggerPMID)
+        {
+          getStatistics().fillHistogram("chsig_trigger_time", channelSig.getTime());
+        }
+        else
+        {
+          getStatistics().fillHistogram("chsig_notrigger_time", channelSig.getTime());
+        }
+
+        getStatistics().fillHistogram("channels_occ", channelSig.getChannel().getID());
 
         getStatistics().fillHistogram("pm_occ", channelSig.getChannel().getPM().getID());
         getStatistics().fillHistogram(Form("pm_occ_thr%d", channelSig.getChannel().getThresholdNumber()), channelSig.getChannel().getPM().getID());
@@ -221,7 +236,13 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 void TimeWindowCreator::initialiseHistograms()
 {
   getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Channel Signals Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
-                                          "Channels Signal in Time Slot", "Number of Time Slots");
+                                          "Channels Signal in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_trigger_time", "Trigger Channel Signals Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Trigger Channels Signal in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_notrigger_time", "No-Trigger Channel Signals Time", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Trigger Channels Signal in Time Slot [ps]", "Number of Time Slots");                                           
 
   getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 150, 0.5, 150.5), "Channels Signal in Time Slot",
                                           "Number of Time Slots");
@@ -239,7 +260,7 @@ void TimeWindowCreator::initialiseHistograms()
                                           "Channel ID", "Number of Channel Signals");
 
   getStatistics().createHistogramWithAxes(
-      new TH1D("occ_channels", "Channels occupation (downscaled)", maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
+      new TH1D("channels_occ", "Channels occupation (downscaled)", maxChannelID - minChannelID + 1, minChannelID - 0.5, maxChannelID + 0.5),
       "Channel ID", "Number of Channel Signals");
 
   getStatistics().createHistogramWithAxes(new TH1D("reco_flags_chsig", "Number of good and corrupted Channel Sigals created", 4, 0.5, 4.5), " ",

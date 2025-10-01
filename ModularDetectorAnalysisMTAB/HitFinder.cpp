@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+using namespace std;
 using namespace jpet_options_tools;
 
 HitFinder::HitFinder(const char* name) : JPetUserTask(name) {}
@@ -42,6 +43,23 @@ bool HitFinder::init()
   if (isOptionSet(fParams.getOptions(), kSaveCalibHistosParamKey))
   {
     fSaveCalibHistos = getOptionAsBool(fParams.getOptions(), kSaveCalibHistosParamKey);
+  }
+
+  if (isOptionSet(fParams.getOptions(), kMinTimeParamKey))
+  {
+    fMinTime = getOptionAsDouble(fParams.getOptions(), kMinTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMinTimeParamKey.c_str(), fMinTime));
+  }
+  if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey))
+  {
+    fMaxTime = getOptionAsDouble(fParams.getOptions(), kMaxTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMaxTimeParamKey.c_str(), fMaxTime));
   }
 
   // Reading file with effective light velocit and TOF synchronization constants to property tree
@@ -85,11 +103,68 @@ bool HitFinder::exec()
 {
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
+    fTWHasTrigger = false;
+
     auto signalsBySlot = HitFinderTools::getSignalsByScin(timeWindow);
+
+    vector<JPetPhysRecoHit> triggerHitsVec;
+    if(signalsBySlot.find(fTriggerScinID) != signalsBySlot.end())
+    {
+      fTWHasTrigger = true;
+      auto triggerMtxSigs = signalsBySlot.at(fTriggerScinID);
+      for(auto mtxSig : triggerMtxSigs)
+      {
+        auto triggerHit = HitFinderTools::createDummyHit(mtxSig, 0.0);
+        triggerHitsVec.push_back(triggerHit);
+      }
+    }
+
     auto allHits = HitFinderTools::matchAllSignals(signalsBySlot, fABTimeDiff, fConstansTree, getStatistics(), fSaveControlHistos);
+    
+    if(triggerHitsVec.size() > 0)
+    {
+      if (fSaveControlHistos)
+      {
+        getStatistics().fillHistogram("hits_trigger_tslot", triggerHitsVec.size());
+        getStatistics().fillHistogram("hits_tslot", allHits.size());
+
+        for(auto hit : allHits)
+        {
+          double hitTimeMod = hit.getTime() - triggerHitsVec.at(0).getTime();
+          getStatistics().fillHistogram("hit_time_mod", hitTimeMod);
+          getStatistics().fillHistogram("hit_time_trigger", hit.getTime());
+        }
+      }
+      
+      // Sum the hits 
+      allHits.insert(allHits.end(), triggerHitsVec.begin(), triggerHitsVec.end());
+    }
+    else
+    {
+      if (fSaveControlHistos)
+      {
+        for(auto hit : allHits)
+        {
+          getStatistics().fillHistogram("hit_time_notrigger", hit.getTime());
+        }
+      }
+    }
+
     if (allHits.size() > 0)
     {
       saveHits(allHits);
+    }
+    
+    if (fSaveControlHistos)
+    {
+      if(fTWHasTrigger)
+      {
+        getStatistics().fillHistogram("tw_tigger_hit", 1);
+      }
+      else 
+      {
+        getStatistics().fillHistogram("tw_tigger_hit", 2);
+      }
     }
   }
   else
@@ -110,11 +185,6 @@ void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
   auto sortedHits = hits;
   HitFinderTools::sortByTime(sortedHits);
 
-  if (fSaveControlHistos)
-  {
-    getStatistics().fillHistogram("hits_tslot", hits.size());
-  }
-
   for (auto& hit : sortedHits)
   {
     // Checking minimal multiplicity condition
@@ -127,6 +197,8 @@ void HitFinder::saveHits(const std::vector<JPetPhysRecoHit>& hits)
     fOutputEvents->add<JPetPhysRecoHit>(hit);
     if (fSaveControlHistos)
     {
+      getStatistics().fillHistogram("hit_time", hit.getTime());
+
       int scinID = hit.getScin().getID();
       getStatistics().fillHistogram("hits_scin", scinID, sortedHits.size());
       getStatistics().fillHistogram("hit_pos", hit.getPosZ(), hit.getPosY(), hit.getPosX());
@@ -149,15 +221,35 @@ void HitFinder::initialiseHistograms()
   auto minScinID = getParamBank().getScins().begin()->first;
   auto maxScinID = getParamBank().getScins().rbegin()->first;
 
-  getStatistics().createHistogramWithAxes(new TH1D("hits_tslot", "Number of Hits in Time Window", 400, 0.5, 400.5), "Hits in Time Slot",
+  getStatistics().createHistogramWithAxes(new TH1D("tw_tigger_hit", "Number of time windows with or without trigger Hits", 3, 0.5, 3.5), " ",
+                                          "Number of Time Windows");
+  vector<pair<unsigned, string>> binLabels = {make_pair(1, "Trigger"), make_pair(2, "No trigger"), make_pair(3, " ")};
+  getStatistics().setHistogramBinLabel("tw_tigger_hit", getStatistics().AxisLabel::kXaxis, binLabels);
+
+  getStatistics().createHistogramWithAxes(new TH1D("hit_time", "Hit Time in time window", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Hit in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("hit_time_mod", "Hit Time in time window modified by time of trigger hit time", 200, -1.1 * fMaxTime, 1.1 * fMaxTime),
+                                          "Hit in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("hit_time_trigger", "Hit Time in time window with trigger signal present", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Hit in Time Slot [ps]", "Number of Time Slots");
+                                          
+  getStatistics().createHistogramWithAxes(new TH1D("hit_time_notrigger", "Hit Time in time window without trigger signal", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "Hit in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("hits_tslot", "Number of Hits in Time Window", 100, 0.5, 100.5), "Hits in Time Slot",
                                           "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("hits_trigger_tslot", "Number of Trigger Hits in Time Window", 100, 0.5, 100.5), "Hits in Time Slot",
+                                          "Number of Time Slots");                                          
 
   getStatistics().createHistogramWithAxes(
       new TH1D("hits_scin", "Number of Hits per Scintillators", maxScinID - minScinID + 1, minScinID - 0.5, maxScinID + 0.5), "Scin ID",
       "Number of Hits");
 
   getStatistics().createHistogramWithAxes(new TH3D("hit_pos", "Hit Position", 101, -50.5, 50.5, 101, -50.5, 50.5, 101, -50.5, 50.5), "Z [cm]",
-                                          "X [cm]", "Y [cm]");
+                                          "Y [cm]", "X [cm]");
 
   getStatistics().createHistogramWithAxes(new TH2D("hit_z_pos_scin", "Z-axis position of hits in Scintillators", maxScinID - minScinID + 1,
                                                    minScinID - 0.5, maxScinID + 0.5, 121, -30.5, 30.5),

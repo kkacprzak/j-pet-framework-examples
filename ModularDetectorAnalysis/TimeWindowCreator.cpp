@@ -187,6 +187,7 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
         if (gRandom->Uniform() < fScalingFactor)
         {
           getStatistics().fillHistogram("occ_channels", channelSig.getChannel().getID());
+          getStatistics().fillHistogram("chsig_time", channelSig.getTime());
 
           if (channelSig.getRecoFlag() == JPetRecoSignal::Good)
           {
@@ -220,6 +221,9 @@ void TimeWindowCreator::saveChannelSignals(const vector<JPetChannelSignal>& chan
 
 void TimeWindowCreator::initialiseHistograms()
 {
+  getStatistics().createHistogramWithAxes(new TH1D("chsig_time", "Channel Signals Time", 200, 1.1 * 1000.0 * fMinTime, 1.1 * 1000.0 * fMaxTime),
+                                          "Channels Signal in Time Slot", "Number of Time Slots");
+                                          
   getStatistics().createHistogramWithAxes(new TH1D("chsig_tslot", "Signal Channels Per Time Slot", 50, 0.5, 50.5), "Channels Signal in Time Slot",
                                           "Number of Time Slots");
 

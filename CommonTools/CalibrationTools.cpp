@@ -259,12 +259,12 @@ void CalibrationTools::selectCosmicsForToF(const JPetEvent& event, JPetStatistic
       TVector3 hit1PosXZ(hit1->getPosX(), 0.0, hit1->getPosZ());
       TVector3 hit2PosXZ(hit2->getPosX(), 0.0, hit2->getPosZ());
       TVector3 cosmicXZ = hit2PosXZ - hit1PosXZ;
-      double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_Y);
-      // double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_X);
+      // double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_Y);
+      double thetaXZ = TMath::RadToDeg() * cosmicXZ.Angle(vecN_X);
 
       stats.fillHistogram("cosmic_hits_theta_xz_all", thetaXZ);
       stats.fillHistogram("cosmic_hits_z_diff_all", hit2->getPosZ() - hit1->getPosZ());
-      if (fabs(thetaXZ - detectorYRot) < maxThetaDiff)
+      if (fabs(thetaXZ - detectorYRot) > maxThetaDiff)
       {
         test1 = true;
         stats.fillHistogram("cosmic_hits_theta_xz_cut", thetaXZ);

@@ -56,6 +56,7 @@ protected:
   bool fSaveControlHistos = true;
   double fMinTime = 0.0;
   double fMaxTime = 1.e6;
+  int fTriggerPMID = 105;
 
   std::map<std::uint32_t, int> fChannelOffsets;
 };

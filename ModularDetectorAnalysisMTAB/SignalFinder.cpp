@@ -58,6 +58,23 @@ bool SignalFinder::init()
         Form("No value of the %s parameter provided by the user. Using default value of %lf.", kLeadTrailMaxTimeParamKey.c_str(), fLeadTrailMaxTime));
   }
 
+  if (isOptionSet(fParams.getOptions(), kMinTimeParamKey))
+  {
+    fMinTime = getOptionAsDouble(fParams.getOptions(), kMinTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMinTimeParamKey.c_str(), fMinTime));
+  }
+  if (isOptionSet(fParams.getOptions(), kMaxTimeParamKey))
+  {
+    fMaxTime = getOptionAsDouble(fParams.getOptions(), kMaxTimeParamKey);
+  }
+  else
+  {
+    WARNING(Form("No value of the %s parameter provided by the user. Using default value of %lf.", kMaxTimeParamKey.c_str(), fMaxTime));
+  }
+
   // For plotting ToT histograms
   if (isOptionSet(fParams.getOptions(), kToTHistoUpperLimitParamKey))
   {
@@ -137,14 +154,51 @@ bool SignalFinder::exec()
   // Getting the data from event in an apropriate format
   if (auto timeWindow = dynamic_cast<const JPetTimeWindow* const>(fEvent))
   {
+    fTWHasTrigger = false;
+    
     // Distribute channel signals by PM IDs
-    auto& chSigsPMMap = SignalFinderTools::getChannelSignalsByPM(timeWindow, fUseCorruptedChannelSignals, -1);
+    auto& chSigsPMMap = SignalFinderTools::getChannelSignalsByPM(timeWindow, fUseCorruptedChannelSignals, 105);
+
+    // Create trigger signals
+    vector<JPetPMSignal> triggPMSigVec;
+    if(chSigsPMMap.find(fTriggerPMID) != chSigsPMMap.end())
+    {
+      fTWHasTrigger = true;
+      auto triggerChSignals = chSigsPMMap.at(fTriggerPMID);
+      for(auto trigChSig : triggerChSignals)
+      {
+        if (trigChSig.getEdgeType() == JPetChannelSignal::Leading)
+        {
+          JPetPMSignal triggerPMSig;
+          triggerPMSig.setPM(trigChSig.getChannel().getPM());
+          triggerPMSig.setTime(trigChSig.getTime());
+          triggerPMSig.setToT(-999.0);
+          triggPMSigVec.push_back(triggerPMSig);
+        }
+      }
+    }
 
     // Building photomultiplier signals
     auto allSignals = SignalFinderTools::buildAllSignals(chSigsPMMap, fEdgeMaxTime, fLeadTrailMaxTime, kNumOfThresholds, getStatistics(),
                                                          fSaveControlHistos, fToTCalcType, fConstansTree, fThresholdOrderings);
 
+    if(triggPMSigVec.size() > 0)
+    {
+      allSignals.insert(allSignals.end(), triggPMSigVec.begin(), triggPMSigVec.end());
+    }                                                         
     savePMSignals(allSignals);
+
+    if (fSaveControlHistos)
+    {
+      if(fTWHasTrigger)
+      {
+        getStatistics().fillHistogram("tw_tigger_pmsig", 1);
+      }
+      else 
+      {
+        getStatistics().fillHistogram("tw_tigger_pmsig", 2);
+      }
+    }
   }
   else
   {
@@ -210,11 +264,30 @@ void SignalFinder::savePMSignals(const vector<JPetPMSignal>& pmSigVec)
 
     if (fSaveControlHistos)
     {
+      getStatistics().fillHistogram("pmsig_time", pmSig.getTime());
+      if(fTWHasTrigger)
+      {
+        getStatistics().fillHistogram("pmsig_time_trigger", pmSig.getTime());
+      }
+      else
+      {
+        getStatistics().fillHistogram("pmsig_time_notrigger", pmSig.getTime());
+      }
+
       getStatistics().fillHistogram("pmsig_multi", pmSig.getLeadTrailPairs().size());
       getStatistics().fillHistogram("pmsig_pm_id", pmSig.getPM().getID());
-      if (pmSig.getToT() != 0.0)
+      if (pmSig.getToT() > 0.0)
       {
         getStatistics().fillHistogram("pmsig_tot_pm_id", pmSig.getPM().getID(), pmSig.getToT());
+      }
+
+      if (mtxSig.getMatrix().getSide() == JPetMatrix::SideA)
+      {
+        getStatistics().fillHistogram("mtxsig_scin_sideA", scinID);
+      }
+      else if (mtxSig.getMatrix().getSide() == JPetMatrix::SideB)
+      {
+        getStatistics().fillHistogram("mtxsig_scin_sideB", scinID);
       }
     }
   }
@@ -224,6 +297,9 @@ void SignalFinder::initialiseHistograms()
 {
   auto minPMID = getParamBank().getPMs().begin()->first;
   auto maxPMID = getParamBank().getPMs().rbegin()->first;
+
+  auto minScinID = getParamBank().getScins().begin()->first;
+  auto maxScinID = getParamBank().getScins().rbegin()->first;
 
   getStatistics().createHistogramWithAxes(new TH1D("reco_flags_pmsig", "Number of good and corrupted Channel Sigals created", 4, 0.5, 4.5), " ",
                                           "Number of Channel Signals");
@@ -236,6 +312,11 @@ void SignalFinder::initialiseHistograms()
   getStatistics().createHistogramWithAxes(new TH1D("unused_chsig_thr", "Unused Channel Signals per THR", 9, 0.5, 9.5), " ",
                                           "Number of Channel Signals");
   getStatistics().setHistogramBinLabel("unused_chsig_thr", getStatistics().AxisLabel::kXaxis, binLabels2);
+
+  getStatistics().createHistogramWithAxes(new TH1D("tw_tigger_pmsig", "Number of time windows with or without trigger PM signals", 3, 0.5, 3.5), " ",
+                                          "Number of Time Windows");
+  vector<pair<unsigned, string>> binLabels3 = {make_pair(1, "Trigger"), make_pair(2, "No trigger"), make_pair(3, " ")};
+  getStatistics().setHistogramBinLabel("tw_tigger_pmsig", getStatistics().AxisLabel::kXaxis, binLabels3);
 
   getStatistics().createHistogramWithAxes(
       new TH1D("unused_chsig_pm", "Unused Signal Channels per SiPM", maxPMID - minPMID + 1, minPMID - 0.5, maxPMID + 0.5), "SiPM ID",
@@ -251,10 +332,27 @@ void SignalFinder::initialiseHistograms()
   getStatistics().createHistogramWithAxes(new TH1D("pmsig_tslot", "Number of PM Signals in Time Window", 100, 0.5, 100.5),
                                           "Number of PM Signal in Time Window", "Number of Time Windows");
 
-  // ToT of signals
+  // Time and ToT of signals
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_time", "PM Signals Time in time window", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "PM Signal in Time Slot [ps]", "Number of Time Slots");
+
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_time_trigger", "PM Signals Time in time window with trigger signal present", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "PM Signal in Time Slot [ps]", "Number of Time Slots");
+                                          
+  getStatistics().createHistogramWithAxes(new TH1D("pmsig_time_notrigger", "PM Signals Time in time window without trigger signal", 200, 1.1 * fMinTime, 1.1 * fMaxTime),
+                                          "PM Signal in Time Slot [ps]", "Number of Time Slots");                                          
+
   getStatistics().createHistogramWithAxes(new TH2D("pmsig_tot_pm_id", "SiPM Signal Time over Threshold per SiPM ID", maxPMID - minPMID + 1,
                                                    minPMID - 0.5, maxPMID + 0.5, 200, 0.0, fToTHistoUpperLimit),
                                           "SiPM ID", "ToT [ps]");
+
+  getStatistics().createHistogramWithAxes(
+      new TH1D("mtxsig_scin_sideA", "Number of Matrix Signals per scintillator side A", maxScinID - minScinID + 1, minScinID - 0.5, maxScinID + 0.5),
+      "Scin ID", "Number of Matrix Signals");
+
+  getStatistics().createHistogramWithAxes(
+      new TH1D("mtxsig_scin_sideB", "Number of Matrix Signals per scintillator side B", maxScinID - minScinID + 1, minScinID - 0.5, maxScinID + 0.5),
+      "Scin ID", "Number of Matrix Signals");                                          
 
   for (unsigned int thr = 1; thr <= kNumOfThresholds; thr++)
   {
