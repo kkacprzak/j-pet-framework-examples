@@ -47,7 +47,9 @@ set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.h
             ${CMAKE_CURRENT_SOURCE_DIR}/TimeWindowCreatorTools.h
             ${CMAKE_CURRENT_SOURCE_DIR}/UniversalFileLoader.h
             ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h)
+            ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.h
+            ../NTupleExport/NTupler.h
+            )
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EventCategorizer.cpp
@@ -63,7 +65,9 @@ set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Downscaler.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/UniversalFileLoader.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverter.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/ToTEnergyConverterFactory.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+            ../NTupleExport/NTupler.cpp
+            )
 
 
 add_executable(${projectBinary} ${SOURCES} ${HEADERS})

@@ -13,6 +13,7 @@
  *  @file main.cpp
  */
 
+#include "../NTupleExport/NTupler.h"
 #include "Downscaler.h"
 #include "EventCategorizer.h"
 #include "EventFinder.h"
@@ -37,6 +38,7 @@ int main(int argc, const char* argv[])
     manager.registerTask<EventFinder>("EventFinder");
     manager.registerTask<Downscaler>("Downscaler");
     manager.registerTask<EventCategorizer>("EventCategorizer");
+    manager.registerTask<NTupler>("NTupler");
 
     manager.useTask("TimeWindowCreator", "hld", "tslot.calib");
     manager.useTask("SignalFinder", "tslot.calib", "raw.sig");
@@ -45,6 +47,7 @@ int main(int argc, const char* argv[])
     manager.useTask("EventFinder", "hits", "unk.evt");
     manager.useTask("Downscaler", "unk.evt", "presel.evt");
     manager.useTask("EventCategorizer", "presel.evt", "cat.evt");
+    manager.useTask("NTupler", "cat.evt", "histo.evt");
 
     manager.run(argc, argv);
   }
